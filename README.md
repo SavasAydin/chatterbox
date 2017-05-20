@@ -2,13 +2,17 @@ chatterbox
 ============
 Chatterbox is a server that allows users to create up to four different chat rooms.
 The server architecture looks like this:
-              _____
-	     |North|
-	 ____|_____|____
-	|West| CAP |East|
-	|____|_____|____|
-	     |South|    
-	     |_____|
+                 _____ 
+               |       |      
+               | North |      
+          ____ | _____ | ____ 
+        |      |       |      |
+        | West |  CAP  | East |
+        | ____ | _____ | ____ |
+               |       |      
+               | South |      
+               | _____ |      
+
 
 Chatterbox Access Point (CAP) is the engine that is  placed in the middle
 and users can give the following commands:
