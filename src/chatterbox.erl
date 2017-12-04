@@ -43,15 +43,28 @@ init(Ref, Parent) ->
 
 chatterbox(Rooms) ->
     receive
-	{Ref, Pid, all} ->
-	    Pid ! {Ref, Rooms},
-	    chatterbox(Rooms);
-	{Ref, Pid, {create, Name}} ->
-	    spawn(fun() -> create_room(Name) end),
-	    Pid ! {Ref, created},
-	    chatterbox([Name | Rooms]);
 	{Ref, Pid, stop} ->
-	    Pid ! {Ref, ok}
+	    Pid ! {Ref, ok};
+	{Ref, Pid, Msg} ->
+	    NewRooms = handle_call(Msg, {Ref, Pid}, Rooms),
+	    chatterbox(NewRooms)
+    end.
+
+handle_call(all, {Ref, Pid}, Rooms) ->
+    Pid ! {Ref, Rooms},
+    Rooms;
+handle_call({create, Name}, {Ref, Pid}, Rooms) ->
+    {NewRooms, Reply} = handle_create_room(Name, Rooms),
+    Pid ! {Ref, Reply},
+    NewRooms.
+
+handle_create_room(Name, Rooms) ->
+    case lists:member(Name, Rooms) of
+	true ->
+	    {Rooms, {error, already_created}};
+	false ->
+	    spawn(fun() -> create_room(Name) end),
+	    {[Name | Rooms], created}
     end.
 
 create_room(Name) ->
