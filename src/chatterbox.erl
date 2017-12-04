@@ -3,24 +3,28 @@
 	 stop/1,
 	 init/2,
 	 all/0,
-	 create/1
+	 create/1,
+	 destroy/1
 	]).
 
 start() ->
     start(make_ref(), self()).
 
 stop(_) ->
-    sync_call(stop).
+    sync_call(chatterbox, stop).
 
 all() ->
-    sync_call(all).
+    sync_call(chatterbox, all).
 
 create(Name) ->
-    sync_call({create, Name}).
+    sync_call(chatterbox, {create, Name}).
 
-sync_call(Msg) ->
+destroy(Name) ->
+    sync_call(chatterbox, {destroy, Name}).
+
+sync_call(Where, Msg) ->
     Ref = make_ref(),
-    chatterbox ! {Ref, self(), Msg},
+    Where ! {{Ref, self()}, Msg},
     receive_reply(Ref).
 
 receive_reply(Ref) ->
@@ -43,10 +47,10 @@ init(Ref, Parent) ->
 
 chatterbox(Rooms) ->
     receive
-	{Ref, Pid, stop} ->
+	{{Ref, Pid}, stop} ->
 	    Pid ! {Ref, ok};
-	{Ref, Pid, Msg} ->
-	    NewRooms = handle_call(Msg, {Ref, Pid}, Rooms),
+	{From, Msg} ->
+	    NewRooms = handle_call(Msg, From, Rooms),
 	    chatterbox(NewRooms)
     end.
 
@@ -55,6 +59,10 @@ handle_call(all, {Ref, Pid}, Rooms) ->
     Rooms;
 handle_call({create, Name}, {Ref, Pid}, Rooms) ->
     {NewRooms, Reply} = handle_create_room(Name, Rooms),
+    Pid ! {Ref, Reply},
+    NewRooms;
+handle_call({destroy, Name}, {Ref, Pid}, Rooms) ->
+    {NewRooms, Reply} = handle_destroy_room(Name, Rooms),
     Pid ! {Ref, Reply},
     NewRooms.
 
@@ -67,12 +75,21 @@ handle_create_room(Name, Rooms) ->
 	    {[Name | Rooms], created}
     end.
 
+handle_destroy_room(Name, Rooms) ->
+    case lists:member(Name, Rooms) of
+	true ->
+	    Reply = sync_call(Name, destroy),
+	    {Rooms -- [Name], Reply};
+	false ->
+	    {Rooms, {error, not_existing}}
+    end.
+
 create_room(Name) ->
     register(Name, self()),
     room_loop().
 
 room_loop() ->
     receive
-	_ ->
-	    room_loop()
+	{{Ref, Pid}, destroy} ->
+	    Pid ! {Ref, destroyed}
     end.
