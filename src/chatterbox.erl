@@ -6,6 +6,7 @@
 	 create/1,
 	 destroy/1,
 	 subscribe/1,
+	 unsubscribe/1,
 	 join/2,
 	 list_users/1
 	]).
@@ -30,8 +31,11 @@ create(Room) ->
 destroy(Room) ->
     chatterbox_lib:sync_call(chatterbox, {destroy, Room}).
 
-subscribe(UserName) ->
-    chatterbox_lib:sync_call(chatterbox, {subscribe, UserName}).
+subscribe(User) ->
+    chatterbox_lib:sync_call(chatterbox, {subscribe, User}).
+
+unsubscribe(User) ->
+    chatterbox_lib:sync_call(chatterbox, {unsubscribe, User}).
 
 join(Room, Nick) ->
     chatterbox_lib:sync_call(chatterbox, {join, Room, Nick}).
@@ -66,8 +70,12 @@ handle_call({destroy, Room}, {Ref, Pid}, State) ->
     {NewRooms, Reply} = room:destroy(Room, State#state.rooms),
     Pid ! {Ref, Reply},
     State#state{rooms = NewRooms};
-handle_call({subscribe, UserName}, {Ref, Pid}, State) ->
-    {NewUsers, Reply} = username:subscribe(UserName, State#state.users),
+handle_call({subscribe, User}, {Ref, Pid}, State) ->
+    {NewUsers, Reply} = username:subscribe(User, State#state.users),
+    Pid ! {Ref, Reply},
+    State#state{users = NewUsers};
+handle_call({unsubscribe, User}, {Ref, Pid}, State) ->
+    {NewUsers, Reply} = username:unsubscribe(User, State#state.users),
     Pid ! {Ref, Reply},
     State#state{users = NewUsers};
 handle_call({join, Room, Nick}, {Ref, Pid}, State) ->

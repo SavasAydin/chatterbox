@@ -24,15 +24,18 @@ wait_max(Expected, N) ->
 	    wait_max(Expected, N-1)
     end.
 
-all_command_returns_list_of_created_room() ->
-    Res = chatterbox:all_rooms(),
-    ?assertEqual([], Res).
-
 create_a_chat_room_with_a_name() ->
     Room = room_1,
-    created = chatterbox:create(Room),
-    ?assertEqual([room_1], chatterbox:all_rooms()),
+    Res = chatterbox:create(Room),
+    ?assertEqual(created, Res),
     ?assert(is_process_alive(whereis(Room))),
+    destroyed = chatterbox:destroy(Room).
+
+all_rooms_returns_list_of_created_rooms() ->
+    Room = room_1,
+    created = chatterbox:create(Room),
+    Res = chatterbox:all_rooms(),
+    ?assertEqual([room_1], Res),
     destroyed = chatterbox:destroy(Room).
 
 try_to_create_an_existing_chat_room() ->
@@ -58,9 +61,36 @@ try_to_destroy_non_existing_chat_room() ->
 
 subscribe_to_chatterbox_server_with_a_nickname() ->
     Username = username1,
-    chatterbox:subscribe(Username),
+    Res = chatterbox:subscribe(Username),
+    ?assertEqual(subscribed, Res),
     ?assert(is_pid(whereis(Username))),
-    ?assertEqual([Username], chatterbox:all_users()).
+    unsubscribed = chatterbox:unsubscribe(Username).
+
+all_users_returns_list_of_subscribed_users() ->
+    Username = username1,
+    subscribed = chatterbox:subscribe(Username),
+    Res = chatterbox:all_users(),
+    ?assertEqual([Username], Res),
+    unsubscribed = chatterbox:unsubscribe(Username).
+
+unsubscribe_from_chatterbox_with_a_nickname() ->
+    Username = username1,
+    subscribed = chatterbox:subscribe(Username),
+    Res = chatterbox:unsubscribe(Username),
+    ?assertEqual(unsubscribed, Res),
+    ?assertNot(is_pid(whereis(Username))),
+    ?assertEqual([], chatterbox:all_users()).
+
+try_to_subscribe_with_already_existing_nickname() ->
+    Username = username1,
+    subscribed = chatterbox:subscribe(Username),
+    Res = chatterbox:subscribe(Username),
+    ?assertEqual({error, Username, already_subscribed}, Res).
+
+try_to_unsubscribe_with_non_existing_nickname() ->
+    Username = username1,
+    Res = chatterbox:unsubscribe(Username),
+    ?assertEqual({error, Username, not_exist}, Res).
 
 join_a_chat_room_with_a_nickname() ->
     Room = room_1,
@@ -95,12 +125,16 @@ chatterbox_commands_test_() ->
     {foreach,
      fun chatterbox:start/0,
      fun chatterbox:stop/1,
-     [fun all_command_returns_list_of_created_room/0,
-      fun create_a_chat_room_with_a_name/0,
+     [fun create_a_chat_room_with_a_name/0,
+      fun all_rooms_returns_list_of_created_rooms/0,
       fun try_to_create_an_existing_chat_room/0,
       fun destroy_an_existing_chat_room_with_the_name/0,
       fun try_to_destroy_non_existing_chat_room/0,
       fun subscribe_to_chatterbox_server_with_a_nickname/0,
+      fun all_users_returns_list_of_subscribed_users/0,
+      fun unsubscribe_from_chatterbox_with_a_nickname/0,
+      fun try_to_subscribe_with_already_existing_nickname/0,
+      fun try_to_unsubscribe_with_non_existing_nickname/0,
       fun join_a_chat_room_with_a_nickname/0,
       fun list_users_in_a_chat_room/0,
       fun try_to_join_non_existing_chat_room/0,
