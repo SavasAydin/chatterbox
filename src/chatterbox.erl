@@ -1,14 +1,13 @@
 -module(chatterbox).
 -export([start/0,
 	 stop/1,
-	 init/2,
 	 all/0,
 	 create/1,
 	 destroy/1
 	]).
 
 start() ->
-    start(make_ref(), self()).
+    spawn(fun init/0).
 
 stop(_) ->
     sync_call(chatterbox, stop).
@@ -35,14 +34,8 @@ receive_reply(Ref) ->
 	    {error, timeout}
     end.
 
-start(Ref, Parent) ->
-    Pid = spawn(?MODULE, init, [Ref, Parent]),
-    started = receive_reply(Ref),
-    {ok, Pid}.
-
-init(Ref, Parent) ->
+init() ->
     register(chatterbox, self()),
-    Parent ! {Ref, started},
     chatterbox([]).
 
 chatterbox(Rooms) ->
