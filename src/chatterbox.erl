@@ -2,7 +2,9 @@
 -export([start/0,
 	 stop/1,
 	 init/2,
-	 all/0]).
+	 all/0,
+	 create/1
+	]).
 
 start() ->
     start(make_ref(), self()).
@@ -12,6 +14,9 @@ stop(_) ->
 
 all() ->
     sync_call(all).
+
+create(Name) ->
+    sync_call({create, Name}).
 
 sync_call(Msg) ->
     Ref = make_ref(),
@@ -41,6 +46,20 @@ chatterbox(Rooms) ->
 	{Ref, Pid, all} ->
 	    Pid ! {Ref, Rooms},
 	    chatterbox(Rooms);
+	{Ref, Pid, {create, Name}} ->
+	    spawn(fun() -> create_room(Name) end),
+	    Pid ! {Ref, created},
+	    chatterbox([Name | Rooms]);
 	{Ref, Pid, stop} ->
 	    Pid ! {Ref, ok}
+    end.
+
+create_room(Name) ->
+    register(Name, self()),
+    room_loop().
+
+room_loop() ->
+    receive
+	_ ->
+	    room_loop()
     end.
