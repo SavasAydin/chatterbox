@@ -62,17 +62,31 @@ join_a_chat_room_with_a_nickname() ->
     Nickname = nickname_1,
     Res = chatterbox:join(Room, Nickname),
     ?assertEqual(joined, Res),
-    ?assertEqual([Nickname], chatterbox:list_users(Room)).
+    ?assertEqual([Nickname], chatterbox:list_users(Room)),
+    destroyed = chatterbox:destroy(Room).
+
+list_users_in_a_chat_room() ->
+    Room = room_1,
+    created = chatterbox:create(Room),
+    Nickname = nickname_1,
+    joined = chatterbox:join(Room, Nickname),
+    ?assertEqual([Nickname], chatterbox:list_users(Room)),
+    destroyed = chatterbox:destroy(Room).
 
 try_to_join_non_existing_chat_room() ->
     Room = room_1,
     Nickname = nickname_1,
     Res = chatterbox:join(Room, Nickname),
-    ?assertEqual({error, Room, not_exist}, Res),
+    ?assertEqual({error, Room, not_exist}, Res).
+
+try_to_list_users_in_non_existing_chat_room() ->
+    Room = room_1,
+    Nickname = nickname_1,
+    {error, Room, not_exist} = chatterbox:join(Room, Nickname),
     ?assertEqual({error, Room, not_exist}, chatterbox:list_users(Room)).
 
 chatterbox_commands_test_() ->
-    {foreach,
+    {setup,
      fun chatterbox:start/0,
      fun chatterbox:stop/1,
      [fun all_command_returns_list_of_created_room/0,
@@ -81,5 +95,7 @@ chatterbox_commands_test_() ->
       fun destroy_an_existing_chat_room_with_the_name/0,
       fun try_to_destroy_non_existing_chat_room/0,
       fun join_a_chat_room_with_a_nickname/0,
-      fun try_to_join_non_existing_chat_room/0
+      fun list_users_in_a_chat_room/0,
+      fun try_to_join_non_existing_chat_room/0,
+      fun try_to_list_users_in_non_existing_chat_room/0
      ]}.
