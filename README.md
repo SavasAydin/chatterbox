@@ -2,19 +2,14 @@
 Chatterbox is a server that allows users to create up to four different chat rooms.  
 Chatterbox Access Point (CAP) is the engine and users can give the following commands:  
 ```
-Commands        -> [Command]
+help -> [Command]
 ```
 Returns the list of permitted commands
 
 ```
-Available rooms -> [RoomName]
+all -> [RoomName]
 ```
-Returns the list of rooms that have not been started yet
-
-```
-Occupied room   -> [RoomName]
-```
-Returns the list of rooms that have already been started
+Returns the list of rooms that have been created   
 
 ```
 create RoomName -> ok | {error, REASON}
@@ -22,7 +17,7 @@ create RoomName -> ok | {error, REASON}
 Creates a chat room with the name ${ROOM_NAME}
 
 ```
-JOIN RoomName   -> ok | {error, REASON} 
+join RoomName -> ok | {error, REASON} 
 ```
 Joins you to the chat room ${ROOM_NAME}
 

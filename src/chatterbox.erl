@@ -1,25 +1,46 @@
 -module(chatterbox).
 -export([start/0,
-	 stop/1]).
+	 stop/1,
+	 init/2,
+	 all/0]).
 
 start() ->
-    spawn(fun init/0).
+    start(make_ref(), self()).
 
-stop(Pid) ->
-    sync_call(Pid, stop).
+stop(_) ->
+    sync_call(stop).
 
-sync_call(Pid, Msg) ->
+all() ->
+    sync_call(all).
+
+sync_call(Msg) ->
     Ref = make_ref(),
-    Pid ! {Ref, self(), Msg},
+    chatterbox ! {Ref, self(), Msg},
+    receive_reply(Ref).
+
+receive_reply(Ref) ->
     receive
-	{Ref, Reply} -> 
+	{Ref, Reply} ->
 	    Reply
     after 100 ->
 	    {error, timeout}
-    end.	    
+    end.
 
-init() ->
+start(Ref, Parent) ->
+    Pid = spawn(?MODULE, init, [Ref, Parent]),
+    started = receive_reply(Ref),
+    {ok, Pid}.
+
+init(Ref, Parent) ->
+    register(chatterbox, self()),
+    Parent ! {Ref, started},
+    chatterbox([]).
+
+chatterbox(Rooms) ->
     receive
+	{Ref, Pid, all} ->
+	    Pid ! {Ref, Rooms},
+	    chatterbox(Rooms);
 	{Ref, Pid, stop} ->
-	    Pid ! {Ref, stopped}
+	    Pid ! {Ref, ok}
     end.
