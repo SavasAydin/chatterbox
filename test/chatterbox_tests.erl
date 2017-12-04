@@ -25,13 +25,13 @@ wait_max(Expected, N) ->
     end.
 
 all_command_returns_list_of_created_room() ->
-    Res = chatterbox:all(),
+    Res = chatterbox:all_rooms(),
     ?assertEqual([], Res).
 
 create_a_chat_room_with_a_name() ->
     Room = room_1,
     created = chatterbox:create(Room),
-    ?assertEqual([room_1], chatterbox:all()),
+    ?assertEqual([room_1], chatterbox:all_rooms()),
     ?assert(is_process_alive(whereis(Room))),
     destroyed = chatterbox:destroy(Room).
 
@@ -40,7 +40,7 @@ try_to_create_an_existing_chat_room() ->
     created = chatterbox:create(Room),
     Res = chatterbox:create(Room),
     ?assertEqual({error, Room, already_created}, Res),
-    ?assertEqual([Room], chatterbox:all()),
+    ?assertEqual([Room], chatterbox:all_rooms()),
     destroyed = chatterbox:destroy(Room).
 
 destroy_an_existing_chat_room_with_the_name() ->
@@ -48,13 +48,19 @@ destroy_an_existing_chat_room_with_the_name() ->
     created = chatterbox:create(Room),
     Res = chatterbox:destroy(Room),
     ?assertEqual(destroyed, Res),
-    ?assertEqual([], chatterbox:all()),
+    ?assertEqual([], chatterbox:all_rooms()),
     ?assertEqual(undefined, whereis(Room)).
 
 try_to_destroy_non_existing_chat_room() ->
     Room = room_1,
     Res = chatterbox:destroy(Room),
     ?assertEqual({error, Room, not_exist}, Res).
+
+subscribe_to_chatterbox_server_with_a_nickname() ->
+    Username = username1,
+    chatterbox:subscribe(Username),
+    ?assert(is_pid(whereis(Username))),
+    ?assertEqual([Username], chatterbox:all_users()).
 
 join_a_chat_room_with_a_nickname() ->
     Room = room_1,
@@ -86,7 +92,7 @@ try_to_list_users_in_non_existing_chat_room() ->
     ?assertEqual({error, Room, not_exist}, chatterbox:list_users(Room)).
 
 chatterbox_commands_test_() ->
-    {setup,
+    {foreach,
      fun chatterbox:start/0,
      fun chatterbox:stop/1,
      [fun all_command_returns_list_of_created_room/0,
@@ -94,6 +100,7 @@ chatterbox_commands_test_() ->
       fun try_to_create_an_existing_chat_room/0,
       fun destroy_an_existing_chat_room_with_the_name/0,
       fun try_to_destroy_non_existing_chat_room/0,
+      fun subscribe_to_chatterbox_server_with_a_nickname/0,
       fun join_a_chat_room_with_a_nickname/0,
       fun list_users_in_a_chat_room/0,
       fun try_to_join_non_existing_chat_room/0,

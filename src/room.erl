@@ -41,16 +41,16 @@ list_users(Room, Rooms) ->
 
 init_room(Name) ->
     register(Name, self()),
-    loop([]).
+    loop_room([]).
 
-loop(Users) ->
+loop_room(Users) ->
     receive
 	{{Ref, Pid}, destroy} ->
 	    Pid ! {Ref, destroyed};
 	{{Ref, Pid}, {join, User}} ->
 	    Pid ! {Ref, joined},
-	    loop([User | Users]);
+	    loop_room([User | Users]);
 	{{Ref, Pid}, list_users} ->
 	    Pid ! {Ref, Users},
-	    loop(Users)
+	    loop_room(Users)
     end.
