@@ -1,6 +1,6 @@
 -module(chatterbox).
 -export([start/0,
-	 stop/1,
+	 stop/0,
 	 all_rooms/0,
 	 all_users/0,
 	 create/1,
@@ -16,7 +16,7 @@
 start() ->
     spawn(fun init/0).
 
-stop(_) ->
+stop() ->
     chatterbox_lib:sync_call(chatterbox, stop).
 
 all_rooms() ->
@@ -37,8 +37,8 @@ subscribe(User) ->
 unsubscribe(User) ->
     chatterbox_lib:sync_call(chatterbox, {unsubscribe, User}).
 
-join(Room, Nick) ->
-    chatterbox_lib:sync_call(chatterbox, {join, Room, Nick}).
+join(Room, User) ->
+    chatterbox_lib:sync_call(chatterbox, {join, Room, User}).
 
 list_users(Room) ->
     chatterbox_lib:sync_call(chatterbox, {list_users, Room}).
@@ -78,8 +78,8 @@ handle_call({unsubscribe, User}, {Ref, Pid}, State) ->
     {NewUsers, Reply} = username:unsubscribe(User, State#state.users),
     Pid ! {Ref, Reply},
     State#state{users = NewUsers};
-handle_call({join, Room, Nick}, {Ref, Pid}, State) ->
-    Reply = room:join(Nick, Room, State#state.rooms),
+handle_call({join, Room, User}, {Ref, Pid}, State) ->
+    Reply = room:join(User, State#state.users, Room, State#state.rooms),
     Pid ! {Ref, Reply},
     State;
 handle_call({list_users, Room}, {Ref, Pid}, State) ->

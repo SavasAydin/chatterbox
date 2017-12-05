@@ -1,7 +1,7 @@
 -module(room).
 -export([create/2,
 	 destroy/2,
-	 join/3,
+	 join/4,
 	 list_users/2
 	]).
 
@@ -23,12 +23,17 @@ destroy(Room, Rooms) ->
 	    {Rooms, {error, Room, not_exist}}
     end.
 
-join(Nick, Room, Rooms) ->
-    case lists:member(Room, Rooms) of
-	true ->
-	    chatterbox_lib:sync_call(Room, {join, Nick});
+join(User, Users, Room, Rooms) ->
+    case lists:member(User, Users) of
 	false ->
-	    {error, Room, not_exist}
+	    {error, User, not_exist};
+	true ->
+	    case lists:member(Room, Rooms) of
+		true ->
+		    chatterbox_lib:sync_call(Room, {join, User});
+		false ->
+		    {error, Room, not_exist}
+	    end
     end.
 
 list_users(Room, Rooms) ->
