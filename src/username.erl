@@ -9,7 +9,7 @@ subscribe(User, Users) ->
 	    spawn(fun() -> init_user(User) end),
 	    {[User | Users], subscribed};
 	true ->
-	    {Users, {error, User, already_subscribed}}
+	    {Users, {error, User, already_exist}}
     end.
 
 unsubscribe(User, Users) ->

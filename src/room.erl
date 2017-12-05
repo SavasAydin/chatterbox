@@ -8,7 +8,7 @@
 create(Room, Rooms) ->
     case lists:member(Room, Rooms) of
 	true ->
-	    {Rooms, {error, Room, already_created}};
+	    {Rooms, {error, Room, already_exist}};
 	false ->
 	    spawn(fun() -> init_room(Room) end),
 	    {[Room | Rooms], created}
