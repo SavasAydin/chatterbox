@@ -6,12 +6,16 @@
 	 stop/1,
 	 start_chatterbox_server/0,
 	 stop_chatterbox_server/0,
-	 stop_chatterbox_server_if_running/0,
-	 connect_to_chatterbox/0,
-	 disconnect_from_chatterbox/0,
+	 connect_to_chatterbox/1,
+	 disconnect_from_chatterbox/1,
+	 create/1,
+	 delete/1,
+	 is_created/1,
 	 login/1,
 	 logout/1,
-	 is_logged_in/1
+	 is_logged_in/1,
+	 send_message/1,
+	 receive_from_socket/1
 	]).
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -21,7 +25,7 @@
 
 -record(state, {server,
 		port,
-		socket}).
+		sockets = []}).
 
 start_link(Port) ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, Port, []).
@@ -37,21 +41,27 @@ start_chatterbox_server() ->
     gen_server:call(?MODULE, start_chatterbox_server).
 
 stop_chatterbox_server() ->
-    gen_server:call(?MODULE, stop_chatterbox_server).
-
-stop_chatterbox_server_if_running() ->
     case whereis(chatterbox_server) of
 	undefined ->
 	    ok;
 	_  ->
-	    stop_chatterbox_server()
+	    gen_server:call(?MODULE, stop_chatterbox_server)
     end.
 
-connect_to_chatterbox() ->
-    gen_server:call(?MODULE, connect_to_chatterbox).
+connect_to_chatterbox(Username) ->
+    gen_server:call(?MODULE, {connect_to_chatterbox, Username}).
 
-disconnect_from_chatterbox() ->
-    gen_server:call(?MODULE, disconnect_from_chatterbox).
+disconnect_from_chatterbox(Username) ->
+    gen_server:call(?MODULE, {disconnect_from_chatterbox, Username}).
+
+create(Username) ->
+    gen_server:call(?MODULE, {create, Username}).
+
+delete(Username) ->
+    gen_server:call(?MODULE, {delete, Username}).
+
+is_created(Username) ->
+    gen_server:call(?MODULE, {is_created, Username}).
 
 login(Username) ->
     gen_server:call(?MODULE, {login, Username}).
@@ -61,108 +71,72 @@ logout(Username) ->
 
 is_logged_in(Username) ->
     gen_server:call(?MODULE, {is_logged_in, Username}).
-%%--------------------------------------------------------------------
-%% @private
-%% @doc
-%% Handling call messages
-%%
-%% @spec handle_call(Request, From, State) ->
-%%                                   {reply, Reply, State} |
-%%                                   {reply, Reply, State, Timeout} |
-%%                                   {noreply, State} |
-%%                                   {noreply, State, Timeout} |
-%%                                   {stop, Reason, Reply, State} |
-%%                                   {stop, Reason, State}
-%% @end
+
+send_message(Args) ->
+    gen_server:call(?MODULE, {send_message, Args}).
+
+receive_from_socket(Username) ->
+    gen_server:call(?MODULE, {receive_from_socket, Username}).
+
 %%--------------------------------------------------------------------
 handle_call(start_chatterbox_server, _, State) ->
     Port = State#state.port,
     {ok, Pid} = chatterbox_server:start_link(Port),
-    {reply, success, State#state{server = Pid}};
+    {reply, ok, State#state{server = Pid}};
 
 handle_call(stop_chatterbox_server, _, State) ->
     Pid = State#state.server,
     ok = chatterbox_server:stop(Pid),
-    {reply, success, State#state{server = undefined}};
+    {reply, ok, State#state{server = undefined}};
 
-handle_call(connect_to_chatterbox, _, State) ->
+handle_call({connect_to_chatterbox, Username}, _, State) ->
     IpAddress = get_ip_address(),
     Port = State#state.port,
     {ok, Socket} = gen_tcp:connect(IpAddress, Port, [binary]),
-    {reply, success, State#state{socket = Socket}};
+    Sockets = State#state.sockets,
+    {reply, success, State#state{sockets = [{Username, Socket} | Sockets]}};
 
-handle_call(disconnect_from_chatterbox, _, State) ->
-    Socket = State#state.socket,
+handle_call({disconnect_from_chatterbox, Username}, _, State) ->
+    Sockets = State#state.sockets,
+    Socket = proplists:get_value(Username, Sockets),
     ok = gen_tcp:close(Socket),
-    {reply, success, State#state{socket = undefined}};
+    NewSockets = proplists:delete(Username, Sockets),
+    {reply, success, State#state{sockets = NewSockets}};
 
-handle_call({login, Username}, _, State) ->
-    Socket = State#state.socket,
-    Command = "login " ++ Username,
-    ct:pal("Command to send is ~p~n", [Command]),
-    ok = gen_tcp:send(Socket, Command),
+handle_call({send_message, {Username1, to, Username2, Message}}, _, State) ->
+    Sockets = State#state.sockets,
+    Socket1 = proplists:get_value(Username1, Sockets),
+    ok = gen_tcp:send(Socket1, term_to_binary({send, [Username2, Message]})),
+    {reply, ok, State};
+
+handle_call({receive_from_socket, Username}, _, State) ->
+    Sockets = State#state.sockets,
+    Socket = proplists:get_value(Username, Sockets),
     Reply = receive_reply(Socket),
     {reply, Reply, State};
 
-handle_call({logout, Username}, _, State) ->
-    Socket = State#state.socket,
-    Command = "logout " ++ Username,
+handle_call(Command, _, State) ->
     ct:pal("Command to send is ~p~n", [Command]),
-    ok = gen_tcp:send(Socket, Command),
+    Sockets = State#state.sockets,
+    Socket = proplists:get_value(element(2, Command), Sockets),
+    ok = gen_tcp:send(Socket, term_to_binary(Command)),
     Reply = receive_reply(Socket),
-    {reply, Reply, State};
-
-handle_call({is_logged_in, Username}, _, State) ->
-    Socket = State#state.socket,
-    Command = "is logged in " ++ Username,
-    ct:pal("Command to send is ~p~n", [Command]),
-    ok = gen_tcp:send(Socket, Command),
-    Reply = receive_reply(Socket),
-    {reply, Reply, State};
-
-handle_call(_Request, _From, State) ->
-    Reply = ok,
     {reply, Reply, State}.
 
-%%--------------------------------------------------------------------
-%% @private
-%% @doc
-%% Handling cast messages
-%%
-%% @spec handle_cast(Msg, State) -> {noreply, State} |
-%%                                  {noreply, State, Timeout} |
-%%                                  {stop, Reason, State}
-%% @end
 %%--------------------------------------------------------------------
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
 %%--------------------------------------------------------------------
-%% @private
-%% @doc
-%% Handling all non call/cast messages
-%%
-%% @spec handle_info(Info, State) -> {noreply, State} |
-%%                                   {noreply, State, Timeout} |
-%%                                   {stop, Reason, State}
-%% @end
-%%--------------------------------------------------------------------
 handle_info(_Info, State) ->
     {noreply, State}.
 
 %%--------------------------------------------------------------------
-%% @private
-%% @doc
-%% This function is called by a gen_server when it is about to
-%% terminate. It should be the opposite of Module:init/1 and do any
-%% necessary cleaning up. When it returns, the gen_server terminates
-%% with Reason. The return value is ignored.
-%%
-%% @spec terminate(Reason, State) -> void()
-%% @end
-%%--------------------------------------------------------------------
 terminate(_, State) ->
-    Socket = State#state.socket,
+    Sockets = State#state.sockets,
+    [ close_sockets(Socket) || {_, Socket} <- Sockets ].
+
+close_sockets(Socket) ->
     case is_port(Socket) of
 	true ->
 	    gen_tcp:close(Socket);
@@ -171,25 +145,17 @@ terminate(_, State) ->
     end.
 
 %%--------------------------------------------------------------------
-%% @private
-%% @doc
-%% Convert process state when code is changed
-%%
-%% @spec code_change(OldVsn, State, Extra) -> {ok, NewState}
-%% @end
-%%--------------------------------------------------------------------
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
-%%%===================================================================
-%%% Internal functions
-%%%===================================================================
+%%--------------------------------------------------------------------
 get_ip_address() ->
     {ok, Host} = inet:gethostname(),
     {ok, Address} = inet:getaddr(Host, inet),
     Address.
 
 receive_reply(Socket) ->
+    inet:setopts(Socket, [{active, once}]),
     receive
 	{tcp, Socket, Reply} ->
 	    binary_to_term(Reply)
