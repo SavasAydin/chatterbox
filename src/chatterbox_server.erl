@@ -37,21 +37,23 @@ init([Port]) ->
 handle_call(get_listening_socket, _, State) ->
     {reply, State#state.listen_socket, State};
 
-handle_call({subscribe, Username}, _, State) ->
+handle_call({login, Username}, _, State) ->
     Users = State#state.users,
     NewState = State#state{users = [Username | Users]},
-    {reply, {ok, "subscribed"}, NewState};
+    {reply, {ok, "logged in"}, NewState};
 
-handle_call({unsubscribe, Username}, _, State) ->
+handle_call({logout, Username}, _, State) ->
     Users = State#state.users,
     NewState = State#state{users = Users -- [Username]},
-    {reply, {ok, "unsubscribed"}, NewState};
+    {reply, {ok, "logged out"}, NewState};
+
+handle_call({is_logged_in, Username}, _, State) ->
+    Users = State#state.users,
+    Reply = lists:member(Username, Users),
+    {reply, Reply, State};
 
 handle_call(all_users, _, State) ->
-    Users = State#state.users,
-    Stringified = [atom_to_list(U) || U <- Users],
-    Reply = string:join(Stringified, ","),
-    {reply, Reply, State};
+    {reply, State#state.users, State};
 
 handle_call(_Request, _From, State) ->
     Reply = ok,
@@ -70,7 +72,7 @@ handle_info({'DOWN', Ref, process, _, _}, State) ->
 handle_info(_, State) ->
     {noreply, State}.
 
-terminate(_Reason, State) ->
+terminate(_, State) ->
     LSock = State#state.listen_socket,
     case is_port(LSock) of
 	true ->
@@ -101,37 +103,44 @@ loop(Socket) ->
     receive
 	{tcp_closed, Socket} ->
 	    ok = gen_tcp:close(Socket);
-	{tcp, Socket, <<"subscribe ", Username/bitstring>>} ->
-	    Reply = subscribe(binary_to_atom(Username, latin1)),
-	    ok = gen_tcp:send(Socket, Reply),
+	{tcp, Socket, <<"login ", Username/bitstring>>} ->
+	    Reply = login(binary_to_atom(Username, latin1)),
+	    ok = gen_tcp:send(Socket, term_to_binary(Reply)),
 	    loop(Socket);
 	{tcp, Socket, <<"list all users">>} ->
 	    Reply = all_users(),
-	    ok = gen_tcp:send(Socket, Reply),
+	    ok = gen_tcp:send(Socket, term_to_binary(Reply)),
 	    loop(Socket);
-	{tcp, Socket, <<"unsubscribe ", Username/bitstring>>} ->
-	    Reply = unsubscribe(binary_to_atom(Username, latin1)),
-	    ok = gen_tcp:send(Socket, Reply),
+	{tcp, Socket, <<"logout ", Username/bitstring>>} ->
+	    Reply = logout(binary_to_atom(Username, latin1)),
+	    ok = gen_tcp:send(Socket, term_to_binary(Reply)),
+	    loop(Socket);
+	{tcp, Socket, <<"is logged in ", Username/bitstring>>} ->
+	    Reply = is_logged_in(binary_to_atom(Username, latin1)),
+	    ok = gen_tcp:send(Socket, term_to_binary(Reply)),
 	    loop(Socket);
 	{tcp, Socket, <<"send ", Data/bitstring>>} ->
 	    [Username | Msg] = string:tokens(binary_to_list(Data), " "),
-	    ok = gen_tcp:send(Socket, "sent"),
+	    ok = gen_tcp:send(Socket, term_to_binary("sent")),
 	    list_to_atom(Username) ! {message_is_received, Msg},
 	    loop(Socket);
 	{message_is_received, Msg} ->
-	    gen_tcp:send(Socket, string:join(Msg, " ")),
+	    gen_tcp:send(Socket, term_to_binary(string:join(Msg, " "))),
 	    loop(Socket)
 	end.
 
-subscribe(Username) ->
-    {ok, Reply} = gen_server:call(?MODULE, {subscribe, Username}),
+login(Username) ->
+    {ok, Reply} = gen_server:call(?MODULE, {login, Username}),
     register(Username, self()),
     Reply.
 
-all_users() ->
-    gen_server:call(?MODULE, all_users).
-
-unsubscribe(Username) ->
-    {ok, Reply} = gen_server:call(?MODULE, {unsubscribe, Username}),
+logout(Username) ->
+    {ok, Reply} = gen_server:call(?MODULE, {logout, Username}),
     unregister(Username),
     Reply.
+
+is_logged_in(Username) ->
+    gen_server:call(?MODULE, {is_logged_in, Username}).
+
+all_users() ->
+    gen_server:call(?MODULE, all_users).
