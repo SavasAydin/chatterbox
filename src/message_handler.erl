@@ -33,15 +33,13 @@ loop(Socket) ->
 	end.
 
 create_account(Username) ->
-    true = ets:insert(accounts, {Username, password, false}),
-    "account is created".
+    user_server:create(Username).
 
 is_account_created(Username) ->
-    ets:lookup(accounts, Username) /= [].
+    user_server:is_created(Username).
 
 delete_account(Username) ->
-    true = ets:delete(accounts, Username),
-    "account is deleted".
+    user_server:delete(Username).
 
 create_room(Args) ->
     room_server:create(Args).

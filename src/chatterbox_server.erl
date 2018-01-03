@@ -29,7 +29,6 @@ get_listening_socket() ->
 
 init([Port]) ->
     process_flag(trap_exit, true),
-    create_accounts_table_if_not_exist(),
     Opts = [binary, {active, false}, {reuseaddr, true}],
     {ok, LSock} = gen_tcp:listen(Port, Opts),
     accept_incoming_connections(LSock),
@@ -56,7 +55,6 @@ handle_info(_, State) ->
     {noreply, State}.
 
 terminate(_, State) ->
-    delete_accounts_table(),
     LSock = State#state.listen_socket,
     case is_port(LSock) of
 	true ->
@@ -69,20 +67,6 @@ code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
 %%%===================================================================
-create_accounts_table_if_not_exist() ->
-    case ets:info(accounts) of
-	undefined ->
-	    create_accounts_table();
-	_ ->
-	    ok
-    end.
-
-create_accounts_table() ->
-    ets:new(accounts, [public, named_table]).
-
-delete_accounts_table() ->
-    ets:delete(accounts).
-
 accept_incoming_connections(LSock) ->
     Pid = spawn(fun() -> acceptor(LSock) end),
     erlang:monitor(process, Pid).

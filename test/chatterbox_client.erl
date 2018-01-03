@@ -8,6 +8,8 @@
 	 stop_chatterbox_server/0,
 	 start_room_server/0,
 	 stop_room_server/0,
+	 start_user_server/0,
+	 stop_user_server/0,
 	 connect_to_chatterbox/1,
 	 disconnect_from_chatterbox/1,
 	 create_account/1,
@@ -30,6 +32,7 @@
 
 -record(state, {chatterbox_server,
 		room_server,
+		user_server,
 		port,
 		sockets = []}).
 
@@ -63,6 +66,17 @@ stop_room_server() ->
 	    ok;
 	_  ->
 	    gen_server:call(?MODULE, stop_room_server)
+    end.
+
+start_user_server() ->
+    gen_server:call(?MODULE, start_user_server).
+
+stop_user_server() ->
+    case whereis(user_server) of
+	undefined ->
+	    ok;
+	_  ->
+	    gen_server:call(?MODULE, stop_user_server)
     end.
 
 connect_to_chatterbox(Username) ->
@@ -123,6 +137,15 @@ handle_call(stop_room_server, _, State) ->
     Pid = State#state.room_server,
     ok = room_server:stop(Pid),
     {reply, ok, State#state{room_server = undefined}};
+
+handle_call(start_user_server, _, State) ->
+    {ok, Pid} = user_server:start_link(),
+    {reply, ok, State#state{user_server = Pid}};
+
+handle_call(stop_user_server, _, State) ->
+    Pid = State#state.user_server,
+    ok = user_server:stop(Pid),
+    {reply, ok, State#state{user_server = undefined}};
 
 handle_call({connect_to_chatterbox, Username}, _, State) ->
     IpAddress = get_ip_address(),
