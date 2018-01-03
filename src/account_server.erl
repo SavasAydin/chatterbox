@@ -27,8 +27,8 @@ init([]) ->
 stop(ServerRef) ->
     gen_server:stop(ServerRef).
 
-create(Username) ->
-    gen_server:call(?MODULE, {create, Username}).
+create(User) ->
+    gen_server:call(?MODULE, {create, User}).
 
 is_created(Username) ->
     gen_server:call(?MODULE, {is_created, Username}).
@@ -37,9 +37,9 @@ delete(Username) ->
     gen_server:call(?MODULE, {delete, Username}).
 
 %%--------------------------------------------------------------------
-handle_call({create, Username}, _, State) ->
-    true = ets:insert(accounts, {Username, password, false}),
-    {reply, "account is created", State};
+handle_call({create, [Username, Password]}, _, State) ->
+    Reply = create_if_not_exist(Username, Password),
+    {reply, Reply, State};
 
 handle_call({is_created, Username}, _, State) ->
     Reply = ets:lookup(accounts, Username) /= [],
@@ -80,3 +80,12 @@ create_accounts_table_if_not_exist() ->
 
 create_accounts_table() ->
     ets:new(accounts, [public, named_table]).
+
+create_if_not_exist(Username, Password) ->
+    case ets:lookup(accounts, Username) of
+	[] ->
+	    true = ets:insert(accounts, {Username, Password, false}),
+	    "account is created";
+	_ ->
+	    "username is taken"
+    end.

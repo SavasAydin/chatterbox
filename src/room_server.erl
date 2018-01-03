@@ -39,17 +39,16 @@ delete(Args) ->
 
 %%--------------------------------------------------------------------
 handle_call({create, [Username, Roomname]}, _, State) ->
-    Room = #room{name = Roomname, owner = Username, users = [Username]},
-    true = ets:insert(rooms, Room),
-    {reply, "room is created", State};
+    Reply = create_if_not_exist(Username, Roomname),
+    {reply, Reply, State};
 
 handle_call({is_created, Roomname}, _, State) ->
     Reply = ets:lookup(rooms, Roomname) /= [],
     {reply, Reply, State};
 
-handle_call({delete, [_, Roomname]}, _, State) ->
-    true = ets:delete(rooms, Roomname),
-    {reply, "room is deleted", State};
+handle_call({delete, [Username, Roomname]}, _, State) ->
+    Reply = delete_if_owner(Username, Roomname),
+    {reply, Reply, State};
 
 handle_call(_Request, _From, State) ->
     Reply = ok,
@@ -82,3 +81,23 @@ create_rooms_table_if_not_exist() ->
 
 create_rooms_table() ->
     ets:new(rooms, [public, named_table, {keypos, 2}]).
+
+create_if_not_exist(Username, Roomname) ->
+    case ets:lookup(rooms, Roomname) of
+	[] ->
+	    Room = #room{name = Roomname, owner = Username, users = [Username]},
+	    true = ets:insert(rooms, Room),
+	    "room is created";
+	_ ->
+	    "roomname is taken"
+    end.
+
+delete_if_owner(Username, Roomname) ->
+    [Room] = ets:lookup(rooms, Roomname),
+    case Room#room.owner of
+	Username ->
+	    true = ets:delete(rooms, Roomname),
+	    "room is deleted";
+	_ ->
+	    "only owner can delete"
+    end.

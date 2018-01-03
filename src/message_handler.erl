@@ -26,12 +26,15 @@ loop(Socket) ->
 
 	end.
 
-login(Username) ->
-    case ets:update_element(accounts, Username, {3, true}) of
-	true ->
+login([Username, Password]) ->
+    case ets:lookup(accounts, Username) of
+	[{Username, Password, false}] ->
+	    true = ets:update_element(accounts, Username, {3, true}),
 	    register_process(Username),
 	    "logged in";
-	false ->
+	[_] ->
+	    "username or password is wrong";
+	[] ->
 	    "account must be created first"
     end.
 

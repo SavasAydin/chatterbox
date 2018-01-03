@@ -9,10 +9,14 @@
 	]).
 
 -export([create_and_delete_account/1,
+	 try_to_create_the_same_account_twice/1,
 	 login_and_logout_once_created/1,
 	 try_to_login_when_not_created/1,
+	 try_to_login_with_wrong_password/1,
 	 send_a_message/1,
-	 create_and_delete_chat_room/1
+	 create_and_delete_chat_room/1,
+	 try_to_create_the_same_room_twice/1,
+	 try_to_delete_room_when_not_owner/1
 	]).
 
 -include_lib("common_test/include/ct.hrl").
@@ -22,8 +26,9 @@
 
 create_and_delete_account(_) ->
     Username = "Adam",
+    Password = "Password",
     Actions = [{{connect_to_chatterbox, Username}, success},
-	       {{create_account, Username}, "account is created"},
+	       {{create_account, [Username, Password]}, "account is created"},
 	       {{is_account_created, Username}, true},
 	       {{delete_account, Username}, "account is deleted"},
 	       {{is_account_created, Username}, false},
@@ -31,11 +36,22 @@ create_and_delete_account(_) ->
 	      ],
     perform_actions(Actions).
 
+try_to_create_the_same_account_twice(_) ->
+    Username = "Adam",
+    Password = "Password",
+    Actions = [{{connect_to_chatterbox, Username}, success},
+	       {{create_account, [Username, Password]}, "account is created"},
+	       {{create_account, [Username, Password]}, "username is taken"},
+	       {{delete_account, Username}, "account is deleted"},
+	       {{disconnect_from_chatterbox, Username}, success}],
+    perform_actions(Actions).
+
 login_and_logout_once_created(_) ->
     Username = "Adam",
+    Password = "Password",
     Actions = [{{connect_to_chatterbox, Username}, success},
-	       {{create_account, Username}, "account is created"},
-	       {{login, Username}, "logged in"},
+	       {{create_account, [Username, Password]}, "account is created"},
+	       {{login, [Username, Password]}, "logged in"},
 	       {{is_logged_in, Username}, true},
 	       {{logout, Username}, "logged out"},
 	       {{is_logged_in, Username}, false},
@@ -45,21 +61,35 @@ login_and_logout_once_created(_) ->
 
 try_to_login_when_not_created(_) ->
     Username = "Adam",
+    Password = "Password",
     Actions = [{{connect_to_chatterbox, Username}, success},
-	       {{login, Username}, "account must be created first"},
+	       {{login, [Username, Password]}, "account must be created first"},
+	       {{is_logged_in, Username}, false},
+	       {{disconnect_from_chatterbox, Username}, success}],
+    perform_actions(Actions).
+
+try_to_login_with_wrong_password(_) ->
+    Username = "Adam",
+    Password = "Password",
+    WrongPasssword = "Wrong",
+    Actions = [{{connect_to_chatterbox, Username}, success},
+	       {{create_account, [Username, Password]}, "account is created"},
+	       {{login, [Username, WrongPasssword]}, "username or password is wrong"},
 	       {{is_logged_in, Username}, false},
 	       {{disconnect_from_chatterbox, Username}, success}],
     perform_actions(Actions).
 
 send_a_message(_) ->
     Username1 = "Adam",
+    Password1 = "Password1",
     Username2 = "Carol",
+    Password2 = "Password2",
     Actions = [{{connect_to_chatterbox, Username1}, success},
-	       {{create_account, Username1}, "account is created"},
-	       {{login, Username1}, "logged in"},
+	       {{create_account, [Username1, Password1]}, "account is created"},
+	       {{login, [Username1, Password1]}, "logged in"},
 	       {{connect_to_chatterbox, Username2}, success},
-	       {{create_account, Username2}, "account is created"},
-	       {{login, Username2}, "logged in"},
+	       {{create_account, [Username2, Password2]}, "account is created"},
+	       {{login, [Username2, Password2]}, "logged in"},
 	       {{send_message, {Username1, to, Username2, "hello"}}, ok},
 	       {{receive_from_socket, Username1}, "sent"},
 	       {{receive_from_socket, Username2}, "hello"},
@@ -71,15 +101,34 @@ create_and_delete_chat_room(_) ->
     Username = "Adam",
     Room = "Chugginton",
     Actions = [{{connect_to_chatterbox, Username}, success},
-	       {{create_account, Username}, "account is created"},
-	       {{login, Username}, "logged in"},
 	       {{create_room, [Username, Room]}, "room is created"},
 	       {{is_room_created, [Username, Room]}, true},
 	       {{delete_room, [Username, Room]}, "room is deleted"},
 	       {{is_room_created, [Username, Room]}, false},
-	       {{logout, Username}, "logged out"},
-	       {{delete_account, Username}, "account is deleted"},
 	       {{disconnect_from_chatterbox, Username}, success}],
+    perform_actions(Actions).
+
+try_to_create_the_same_room_twice(_) ->
+    Username = "Adam",
+    Room = "Wilson",
+    Actions = [{{connect_to_chatterbox, Username}, success},
+	       {{create_room, [Username, Room]}, "room is created"},
+	       {{create_room, [Username, Room]}, "roomname is taken"},
+	       {{delete_room, [Username, Room]}, "room is deleted"},
+	       {{disconnect_from_chatterbox, Username}, success}],
+    perform_actions(Actions).
+
+try_to_delete_room_when_not_owner(_) ->
+    Username1 = "Adam",
+    Username2 = "Carol",
+    Room = "Brewster",
+    Actions = [{{connect_to_chatterbox, Username1}, success},
+	       {{create_room, [Username1, Room]}, "room is created"},
+	       {{connect_to_chatterbox, Username2}, success},
+	       {{delete_room, [Username2, Room]}, "only owner can delete"},
+	       {{is_room_created, [Username2, Room]}, true},
+	       {{disconnect_from_chatterbox, Username1}, success},
+	       {{disconnect_from_chatterbox, Username2}, success}],
     perform_actions(Actions).
 
 %%--------------------------------------------------------------------
@@ -123,8 +172,12 @@ end_per_testcase(_TestCase, Config) ->
 
 all() ->
     [create_and_delete_account,
+     try_to_create_the_same_account_twice,
      login_and_logout_once_created,
      try_to_login_when_not_created,
+     try_to_login_with_wrong_password,
      send_a_message,
-     create_and_delete_chat_room
+     create_and_delete_chat_room,
+     try_to_create_the_same_room_twice,
+     try_to_delete_room_when_not_owner
     ].
