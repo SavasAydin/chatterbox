@@ -1,8 +1,11 @@
 -module(message_handler).
 -export([loop/1,
-	 create/1,
-	 delete/1,
-	 is_created/1,
+	 create_account/1,
+	 delete_account/1,
+	 is_account_created/1,
+	 create_room/1,
+	 delete_room/1,
+	 is_room_created/1,
 	 login/1,
 	 logout/1,
 	 is_logged_in/1,
@@ -29,16 +32,25 @@ loop(Socket) ->
 
 	end.
 
-create(Username) ->
+create_account(Username) ->
     true = ets:insert(accounts, {Username, password, false}),
-    "created".
+    "account is created".
 
-is_created(Username) ->
+is_account_created(Username) ->
     ets:lookup(accounts, Username) /= [].
 
-delete(Username) ->
+delete_account(Username) ->
     true = ets:delete(accounts, Username),
-    "deleted".
+    "account is deleted".
+
+create_room(Args) ->
+    room_server:create(Args).
+
+is_room_created(Args) ->
+    room_server:is_created(Args).
+
+delete_room(Args) ->
+    room_server:delete(Args).
 
 login(Username) ->
     case ets:update_element(accounts, Username, {3, true}) of
@@ -46,7 +58,7 @@ login(Username) ->
 	    register_process(Username),
 	    "logged in";
 	false ->
-	    "not created"
+	    "account must be created first"
     end.
 
 logout(Username) ->
