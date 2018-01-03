@@ -8,8 +8,8 @@
 	 stop_chatterbox_server/0,
 	 start_room_server/0,
 	 stop_room_server/0,
-	 start_user_server/0,
-	 stop_user_server/0,
+	 start_account_server/0,
+	 stop_account_server/0,
 	 connect_to_chatterbox/1,
 	 disconnect_from_chatterbox/1,
 	 create_account/1,
@@ -32,7 +32,7 @@
 
 -record(state, {chatterbox_server,
 		room_server,
-		user_server,
+		account_server,
 		port,
 		sockets = []}).
 
@@ -68,15 +68,15 @@ stop_room_server() ->
 	    gen_server:call(?MODULE, stop_room_server)
     end.
 
-start_user_server() ->
-    gen_server:call(?MODULE, start_user_server).
+start_account_server() ->
+    gen_server:call(?MODULE, start_account_server).
 
-stop_user_server() ->
-    case whereis(user_server) of
+stop_account_server() ->
+    case whereis(account_server) of
 	undefined ->
 	    ok;
 	_  ->
-	    gen_server:call(?MODULE, stop_user_server)
+	    gen_server:call(?MODULE, stop_account_server)
     end.
 
 connect_to_chatterbox(Username) ->
@@ -86,34 +86,34 @@ disconnect_from_chatterbox(Username) ->
     gen_server:call(?MODULE, {disconnect_from_chatterbox, Username}).
 
 create_account(Username) ->
-    gen_server:call(?MODULE, {create_account, Username}).
+    gen_server:call(?MODULE, {account_server, create, Username}).
 
 delete_account(Username) ->
-    gen_server:call(?MODULE, {delete_account, Username}).
+    gen_server:call(?MODULE, {account_server, delete, Username}).
 
 is_account_created(Username) ->
-    gen_server:call(?MODULE, {is_account_created, Username}).
+    gen_server:call(?MODULE, {account_server, is_created, Username}).
 
 create_room(Args) ->
-    gen_server:call(?MODULE, {create_room, Args}).
+    gen_server:call(?MODULE, {room_server, create, Args}).
 
 delete_room(Args) ->
-    gen_server:call(?MODULE, {delete_room, Args}).
+    gen_server:call(?MODULE, {room_server, delete, Args}).
 
 is_room_created(Args) ->
-    gen_server:call(?MODULE, {is_room_created, Args}).
+    gen_server:call(?MODULE, {room_server, is_created, Args}).
 
 login(Username) ->
-    gen_server:call(?MODULE, {login, Username}).
+    gen_server:call(?MODULE, {message_handler, login, Username}).
 
 logout(Username) ->
-    gen_server:call(?MODULE, {logout, Username}).
+    gen_server:call(?MODULE, {message_handler, logout, Username}).
 
 is_logged_in(Username) ->
-    gen_server:call(?MODULE, {is_logged_in, Username}).
+    gen_server:call(?MODULE, {message_handler, is_logged_in, Username}).
 
 send_message(Args) ->
-    gen_server:call(?MODULE, {send_message, Args}).
+    gen_server:call(?MODULE, {message_handler, send, Args}).
 
 receive_from_socket(Username) ->
     gen_server:call(?MODULE, {receive_from_socket, Username}).
@@ -138,14 +138,14 @@ handle_call(stop_room_server, _, State) ->
     ok = room_server:stop(Pid),
     {reply, ok, State#state{room_server = undefined}};
 
-handle_call(start_user_server, _, State) ->
-    {ok, Pid} = user_server:start_link(),
-    {reply, ok, State#state{user_server = Pid}};
+handle_call(start_account_server, _, State) ->
+    {ok, Pid} = account_server:start_link(),
+    {reply, ok, State#state{account_server = Pid}};
 
-handle_call(stop_user_server, _, State) ->
-    Pid = State#state.user_server,
-    ok = user_server:stop(Pid),
-    {reply, ok, State#state{user_server = undefined}};
+handle_call(stop_account_server, _, State) ->
+    Pid = State#state.account_server,
+    ok = account_server:stop(Pid),
+    {reply, ok, State#state{account_server = undefined}};
 
 handle_call({connect_to_chatterbox, Username}, _, State) ->
     IpAddress = get_ip_address(),
@@ -161,10 +161,10 @@ handle_call({disconnect_from_chatterbox, Username}, _, State) ->
     NewSockets = proplists:delete(Username, Sockets),
     {reply, success, State#state{sockets = NewSockets}};
 
-handle_call({send_message, {Username1, to, Username2, Message}}, _, State) ->
+handle_call({M, F, {Username1, to, Username2, Message}}, _, State) ->
     Sockets = State#state.sockets,
     Socket1 = proplists:get_value(Username1, Sockets),
-    ok = gen_tcp:send(Socket1, term_to_binary({send, [Username2, Message]})),
+    ok = gen_tcp:send(Socket1, term_to_binary({M, F, [Username2, Message]})),
     {reply, ok, State};
 
 handle_call({receive_from_socket, Username}, _, State) ->
@@ -213,9 +213,9 @@ get_ip_address() ->
     {ok, Address} = inet:getaddr(Host, inet),
     Address.
 
-get_username({_, [Username, _]}) ->
+get_username({_, _, [Username, _]}) ->
     Username;
-get_username({_, Username}) ->
+get_username({_, _, Username}) ->
     Username.
 
 receive_reply(Socket) ->
