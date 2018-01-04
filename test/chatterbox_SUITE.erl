@@ -24,6 +24,7 @@
 
 -define(PORT, 12345).
 
+%%--------------------------------------------------------------------
 create_and_delete_account(_) ->
     Username = "Adam",
     Password = "Password",
@@ -36,6 +37,7 @@ create_and_delete_account(_) ->
 	      ],
     perform_actions(Actions).
 
+%%--------------------------------------------------------------------
 try_to_create_the_same_account_twice(_) ->
     Username = "Adam",
     Password = "Password",
@@ -46,6 +48,7 @@ try_to_create_the_same_account_twice(_) ->
 	       {{disconnect_from_chatterbox, Username}, success}],
     perform_actions(Actions).
 
+%%--------------------------------------------------------------------
 login_and_logout_once_created(_) ->
     Username = "Adam",
     Password = "Password",
@@ -59,6 +62,7 @@ login_and_logout_once_created(_) ->
 	       {{disconnect_from_chatterbox, Username}, success}],
     perform_actions(Actions).
 
+%%--------------------------------------------------------------------
 try_to_login_when_not_created(_) ->
     Username = "Adam",
     Password = "Password",
@@ -68,6 +72,7 @@ try_to_login_when_not_created(_) ->
 	       {{disconnect_from_chatterbox, Username}, success}],
     perform_actions(Actions).
 
+%%--------------------------------------------------------------------
 try_to_login_with_wrong_password(_) ->
     Username = "Adam",
     Password = "Password",
@@ -79,6 +84,7 @@ try_to_login_with_wrong_password(_) ->
 	       {{disconnect_from_chatterbox, Username}, success}],
     perform_actions(Actions).
 
+%%--------------------------------------------------------------------
 send_a_message(_) ->
     Username1 = "Adam",
     Password1 = "Password1",
@@ -97,6 +103,7 @@ send_a_message(_) ->
 	       {{disconnect_from_chatterbox, Username2}, success}],
     perform_actions(Actions).
 
+%%--------------------------------------------------------------------
 create_and_delete_chat_room(_) ->
     Username = "Adam",
     Room = "Chugginton",
@@ -108,6 +115,7 @@ create_and_delete_chat_room(_) ->
 	       {{disconnect_from_chatterbox, Username}, success}],
     perform_actions(Actions).
 
+%%--------------------------------------------------------------------
 try_to_create_the_same_room_twice(_) ->
     Username = "Adam",
     Room = "Wilson",
@@ -118,6 +126,7 @@ try_to_create_the_same_room_twice(_) ->
 	       {{disconnect_from_chatterbox, Username}, success}],
     perform_actions(Actions).
 
+%%--------------------------------------------------------------------
 try_to_delete_room_when_not_owner(_) ->
     Username1 = "Adam",
     Username2 = "Carol",

@@ -75,7 +75,27 @@ acceptor(LSock) ->
     case gen_tcp:accept(LSock) of
 	{ok, ASock} ->
 	    gen_server:cast(?MODULE, accepted),
-	    message_handler:loop(ASock);
+	    accept_loop(ASock);
 	Error ->
 	    Error
     end.
+
+accept_loop(Socket) ->
+    inet:setopts(Socket, [{active, once}]),
+    receive
+	{tcp_closed, Socket} ->
+	    ok = gen_tcp:close(Socket);
+
+	{tcp, Socket, Data} ->
+	    {M, F, Args} = binary_to_term(Data),
+	    NewArgs = inject_socket_if_command_is_login(F, Args, Socket),
+	    Reply = M:F(NewArgs),
+	    ok = gen_tcp:send(Socket, term_to_binary(Reply)),
+	    accept_loop(Socket)
+
+	end.
+
+inject_socket_if_command_is_login(login, Args, Socket) ->
+    [Socket | Args];
+inject_socket_if_command_is_login(_, Args, _) ->
+    Args.

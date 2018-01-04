@@ -85,14 +85,29 @@ connect_to_chatterbox(Username) ->
 disconnect_from_chatterbox(Username) ->
     gen_server:call(?MODULE, {disconnect_from_chatterbox, Username}).
 
-create_account(Username) ->
-    gen_server:call(?MODULE, {account_server, create, Username}).
+create_account(Args) ->
+    gen_server:call(?MODULE, {account_server, create, Args}).
 
 delete_account(Username) ->
     gen_server:call(?MODULE, {account_server, delete, Username}).
 
 is_account_created(Username) ->
     gen_server:call(?MODULE, {account_server, is_created, Username}).
+
+login(Args) ->
+    gen_server:call(?MODULE, {account_server, login, Args}).
+
+logout(Username) ->
+    gen_server:call(?MODULE, {account_server, logout, Username}).
+
+is_logged_in(Username) ->
+    gen_server:call(?MODULE, {account_server, is_logged_in, Username}).
+
+send_message(Args) ->
+    gen_server:call(?MODULE, {account_server, send, Args}).
+
+receive_from_socket(Username) ->
+    gen_server:call(?MODULE, {receive_from_socket, Username}).
 
 create_room(Args) ->
     gen_server:call(?MODULE, {room_server, create, Args}).
@@ -102,21 +117,6 @@ delete_room(Args) ->
 
 is_room_created(Args) ->
     gen_server:call(?MODULE, {room_server, is_created, Args}).
-
-login(Username) ->
-    gen_server:call(?MODULE, {message_handler, login, Username}).
-
-logout(Username) ->
-    gen_server:call(?MODULE, {message_handler, logout, Username}).
-
-is_logged_in(Username) ->
-    gen_server:call(?MODULE, {message_handler, is_logged_in, Username}).
-
-send_message(Args) ->
-    gen_server:call(?MODULE, {message_handler, send, Args}).
-
-receive_from_socket(Username) ->
-    gen_server:call(?MODULE, {receive_from_socket, Username}).
 
 %%--------------------------------------------------------------------
 handle_call(start_chatterbox_server, _, State) ->
