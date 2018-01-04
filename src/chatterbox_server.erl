@@ -90,7 +90,7 @@ accept_loop(Socket) ->
 	    {M, F, Args} = binary_to_term(Data),
 	    NewArgs = inject_socket_if_command_is_login(F, Args, Socket),
 	    Reply = M:F(NewArgs),
-	    ok = gen_tcp:send(Socket, term_to_binary(Reply)),
+	    ok = send_reply_if_required(Socket, Reply),
 	    accept_loop(Socket)
 
 	end.
@@ -99,3 +99,8 @@ inject_socket_if_command_is_login(login, Args, Socket) ->
     [Socket | Args];
 inject_socket_if_command_is_login(_, Args, _) ->
     Args.
+
+send_reply_if_required(_, no_reply) ->
+    ok;
+send_reply_if_required(Socket, Reply) ->
+    gen_tcp:send(Socket, term_to_binary(Reply)).

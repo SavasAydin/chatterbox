@@ -15,14 +15,15 @@
 	 create_account/1,
 	 delete_account/1,
 	 is_account_created/1,
-	 create_room/1,
-	 delete_room/1,
-	 is_room_created/1,
 	 login/1,
 	 logout/1,
 	 is_logged_in/1,
 	 send_message/1,
-	 receive_from_socket/1
+	 receive_from_socket/1,
+	 create_room/1,
+	 delete_room/1,
+	 is_room_created/1,
+	 list_room_users/1
 	]).
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -89,7 +90,7 @@ is_logged_in(Username) ->
     gen_server:call(?MODULE, {account_server, is_logged_in, Username}).
 
 send_message(Args) ->
-    gen_server:call(?MODULE, {account_server, send, Args}).
+    gen_server:call(?MODULE, {account, send, Args}).
 
 receive_from_socket(Username) ->
     gen_server:call(?MODULE, {receive_from_socket, Username}).
@@ -102,6 +103,9 @@ delete_room(Args) ->
 
 is_room_created(Args) ->
     gen_server:call(?MODULE, {room_server, is_created, Args}).
+
+list_room_users(Args) ->
+    gen_server:call(?MODULE, {account, list_room_users, Args}).
 
 %%--------------------------------------------------------------------
 handle_call({chatterbox_server, start}, _, State) ->

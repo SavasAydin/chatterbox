@@ -80,7 +80,7 @@ create_if_not_exist(Username, Roomname) ->
 	[] ->
 	    Room = #room{name = Roomname, owner = Username},
 	    true = ets:insert(rooms, Room),
-	    start_room_process(Username, Roomname),
+	    room:start_room_process(Username, Roomname),
 	    "room is created";
 	_ ->
 	    "roomname is taken"
@@ -90,21 +90,9 @@ delete_if_owner(Username, Roomname) ->
     [Room] = ets:lookup(rooms, Roomname),
     case Room#room.owner of
 	Username ->
-	    chatterbox_lib:to_process_name(Roomname) ! stop,
+	    room:stop_room_process(Roomname),
 	    true = ets:delete(rooms, Roomname),
 	    "room is deleted";
 	_ ->
 	    "only owner can delete"
-    end.
-
-start_room_process(Username, Roomname) ->
-    spawn(fun() ->
-		  chatterbox_lib:register_process(Roomname, self()),
-		  room_loop([Username])
-	  end).
-
-room_loop(_) ->
-    receive
-	stop ->
-	    ok
     end.

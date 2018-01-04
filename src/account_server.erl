@@ -9,8 +9,7 @@
 	 delete/1,
 	 login/1,
 	 is_logged_in/1,
-	 logout/1,
-	 send/1
+	 logout/1
 	]).
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -49,9 +48,6 @@ is_logged_in(Username) ->
 logout(Username) ->
     gen_server:call(?MODULE, {logout, Username}).
 
-send(Args) ->
-    gen_server:call(?MODULE, {send, Args}).
-
 %%--------------------------------------------------------------------
 handle_call({create, [Username, Password]}, _, State) ->
     Reply = create_if_not_exist(Username, Password),
@@ -74,12 +70,8 @@ handle_call({is_logged_in, Username}, _, State) ->
     {reply, Reply, State};
 
 handle_call({logout, Username}, _, State) ->
-    chatterbox_lib:to_process_name(Username) ! stop,
+    account:stop_account_process(Username),
     {reply, "logged out", State};
-
-handle_call({send, [Username, Message]}, _, State) ->
-    list_to_atom(Username) ! {new_message_is_received, Message},
-    {reply, "sent", State};
 
 handle_call(_Request, _From, State) ->
     Reply = ok,
@@ -117,33 +109,10 @@ create_if_not_exist(Username, Password) ->
 login_if_authorized([Socket, Username, Password]) ->
     case ets:lookup(accounts, Username) of
 	[{Username, Password}] ->
-	    start_account_process(Username, Socket),
+	    account:start_account_process(Username, Socket),
 	    "logged in";
 	[_] ->
 	    "username or password is wrong";
 	[] ->
 	    "account must be created first"
-    end.
-
-start_account_process(Username, Socket) ->
-    spawn(fun() ->
-		  chatterbox_lib:register_process(Username, self()),
-		  gen_tcp:controlling_process(Socket, self()),
-		  account_loop(Socket)
-	  end).
-
-account_loop(Socket) ->
-    receive
-	{tcp, Socket, Data} ->
-	    {M, F, A} = binary_to_term(Data),
-	    Reply = M:F(A),
-	    ok = gen_tcp:send(Socket, term_to_binary(Reply)),
-	    account_loop(Socket);
-
-	{new_message_is_received, Msg} ->
-	    gen_tcp:send(Socket, term_to_binary(Msg)),
-	    account_loop(Socket);
-
-	stop ->
-	    ok
     end.

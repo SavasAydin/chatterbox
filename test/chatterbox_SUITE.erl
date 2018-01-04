@@ -15,6 +15,7 @@
 	 try_to_login_with_wrong_password/1,
 	 send_a_message/1,
 	 create_and_delete_chat_room/1,
+	 list_users_of_newly_created_room/1,
 	 try_to_create_the_same_room_twice/1,
 	 try_to_delete_room_when_not_owner/1
 	]).
@@ -99,6 +100,8 @@ send_a_message(_) ->
 	       {{send_message, {Username1, to, Username2, "hello"}}, ok},
 	       {{receive_from_socket, Username1}, "sent"},
 	       {{receive_from_socket, Username2}, "hello"},
+	       {{logout, Username1}, "logged out"},
+	       {{logout, Username2}, "logged out"},
 	       {{disconnect_from_chatterbox, Username1}, success},
 	       {{disconnect_from_chatterbox, Username2}, success}],
     perform_actions(Actions).
@@ -112,6 +115,20 @@ create_and_delete_chat_room(_) ->
 	       {{is_room_created, [Username, Room]}, true},
 	       {{delete_room, [Username, Room]}, "room is deleted"},
 	       {{is_room_created, [Username, Room]}, false},
+	       {{disconnect_from_chatterbox, Username}, success}],
+    perform_actions(Actions).
+
+%%--------------------------------------------------------------------
+list_users_of_newly_created_room(_) ->
+    Username = "Adam",
+    Password = "Password",
+    Room = "Chugginton",
+    Actions = [{{connect_to_chatterbox, Username}, success},
+	       {{create_account, [Username, Password]}, "account is created"},
+	       {{login, [Username, Password]}, "logged in"},
+	       {{create_room, [Username, Room]}, "room is created"},
+	       {{list_room_users, [Username, Room]}, [Username]},
+	       {{delete_room, [Username, Room]}, "room is deleted"},
 	       {{disconnect_from_chatterbox, Username}, success}],
     perform_actions(Actions).
 
@@ -187,6 +204,7 @@ all() ->
      try_to_login_with_wrong_password,
      send_a_message,
      create_and_delete_chat_room,
+     list_users_of_newly_created_room,
      try_to_create_the_same_room_twice,
      try_to_delete_room_when_not_owner
     ].
