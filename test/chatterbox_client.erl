@@ -47,37 +47,22 @@ stop(ServerRef) ->
     gen_server:stop(ServerRef).
 
 start_chatterbox_server() ->
-    gen_server:call(?MODULE, start_chatterbox_server).
+    gen_server:call(?MODULE, {chatterbox_server, start}).
 
 stop_chatterbox_server() ->
-    case whereis(chatterbox_server) of
-	undefined ->
-	    ok;
-	_  ->
-	    gen_server:call(?MODULE, stop_chatterbox_server)
-    end.
+    stop_if_started(chatterbox_server).
 
 start_room_server() ->
-    gen_server:call(?MODULE, start_room_server).
+    gen_server:call(?MODULE, {room_server, start}).
 
 stop_room_server() ->
-    case whereis(room_server) of
-	undefined ->
-	    ok;
-	_  ->
-	    gen_server:call(?MODULE, stop_room_server)
-    end.
+    stop_if_started(room_server).
 
 start_account_server() ->
-    gen_server:call(?MODULE, start_account_server).
+    gen_server:call(?MODULE, {account_server, start}).
 
 stop_account_server() ->
-    case whereis(account_server) of
-	undefined ->
-	    ok;
-	_  ->
-	    gen_server:call(?MODULE, stop_account_server)
-    end.
+    stop_if_started(account_server).
 
 connect_to_chatterbox(Username) ->
     gen_server:call(?MODULE, {connect_to_chatterbox, Username}).
@@ -119,30 +104,30 @@ is_room_created(Args) ->
     gen_server:call(?MODULE, {room_server, is_created, Args}).
 
 %%--------------------------------------------------------------------
-handle_call(start_chatterbox_server, _, State) ->
+handle_call({chatterbox_server, start}, _, State) ->
     Port = State#state.port,
     {ok, Pid} = chatterbox_server:start_link(Port),
     {reply, ok, State#state{chatterbox_server = Pid}};
 
-handle_call(stop_chatterbox_server, _, State) ->
+handle_call({chatterbox_server, stop}, _, State) ->
     Pid = State#state.chatterbox_server,
     ok = chatterbox_server:stop(Pid),
     {reply, ok, State#state{chatterbox_server = undefined}};
 
-handle_call(start_room_server, _, State) ->
+handle_call({room_server, start}, _, State) ->
     {ok, Pid} = room_server:start_link(),
     {reply, ok, State#state{room_server = Pid}};
 
-handle_call(stop_room_server, _, State) ->
+handle_call({room_server, stop}, _, State) ->
     Pid = State#state.room_server,
     ok = room_server:stop(Pid),
     {reply, ok, State#state{room_server = undefined}};
 
-handle_call(start_account_server, _, State) ->
+handle_call({account_server, start}, _, State) ->
     {ok, Pid} = account_server:start_link(),
     {reply, ok, State#state{account_server = Pid}};
 
-handle_call(stop_account_server, _, State) ->
+handle_call({account_server, stop}, _, State) ->
     Pid = State#state.account_server,
     ok = account_server:stop(Pid),
     {reply, ok, State#state{account_server = undefined}};
@@ -225,4 +210,12 @@ receive_reply(Socket) ->
 	    binary_to_term(Reply)
     after 100 ->
 	    {error, client_timeout}
+    end.
+
+stop_if_started(Server) ->
+    case whereis(Server) of
+	undefined ->
+	    ok;
+	_  ->
+	    gen_server:call(?MODULE, {Server, stop})
     end.

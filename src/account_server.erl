@@ -70,12 +70,11 @@ handle_call({login, Args}, _, State) ->
     {reply, Reply, State};
 
 handle_call({is_logged_in, Username}, _, State) ->
-    Reply = check_that_if_user_is_logged_in(Username),
+    Reply = chatterbox_lib:is_process_defined(Username),
     {reply, Reply, State};
 
 handle_call({logout, Username}, _, State) ->
-    true = ets:update_element(accounts, Username, {3, false}),
-    stop_account_process(Username),
+    chatterbox_lib:to_process_name(Username) ! stop,
     {reply, "logged out", State};
 
 handle_call({send, [Username, Message]}, _, State) ->
@@ -104,20 +103,12 @@ code_change(_OldVsn, State, _Extra) ->
 
 %%%===================================================================
 create_accounts_table_if_not_exist() ->
-    case ets:info(accounts) of
-	undefined ->
-	    create_accounts_table();
-	_ ->
-	    ok
-    end.
-
-create_accounts_table() ->
-    ets:new(accounts, [public, named_table]).
+    chatterbox_lib:create_table_if_not_exist(accounts).
 
 create_if_not_exist(Username, Password) ->
     case ets:lookup(accounts, Username) of
 	[] ->
-	    true = ets:insert(accounts, {Username, Password, false}),
+	    true = ets:insert(accounts, {Username, Password}),
 	    "account is created";
 	_ ->
 	    "username is taken"
@@ -125,8 +116,7 @@ create_if_not_exist(Username, Password) ->
 
 login_if_authorized([Socket, Username, Password]) ->
     case ets:lookup(accounts, Username) of
-	[{Username, Password, false}] ->
-	    true = ets:update_element(accounts, Username, {3, true}),
+	[{Username, Password}] ->
 	    start_account_process(Username, Socket),
 	    "logged in";
 	[_] ->
@@ -137,28 +127,10 @@ login_if_authorized([Socket, Username, Password]) ->
 
 start_account_process(Username, Socket) ->
     spawn(fun() ->
-		  register_process(Username),
+		  chatterbox_lib:register_process(Username, self()),
 		  gen_tcp:controlling_process(Socket, self()),
 		  account_loop(Socket)
 	  end).
-
-register_process(Username) when is_list(Username) ->
-    register_process(list_to_atom(Username));
-register_process(Username) ->
-    register(Username, self()).
-
-stop_account_process(Username) when is_list(Username) ->
-    stop_account_process(list_to_atom(Username));
-stop_account_process(Username) ->
-    Username ! stop.
-
-check_that_if_user_is_logged_in(Username) ->
-    case  ets:lookup(accounts, Username) of
-	[] ->
-	    false;
-	[User] ->
-	    element(3, User)
-    end.
 
 account_loop(Socket) ->
     receive
