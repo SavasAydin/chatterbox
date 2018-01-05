@@ -23,7 +23,8 @@
 	 create_room/1,
 	 delete_room/1,
 	 is_room_created/1,
-	 list_room_users/1
+	 list_room_users/1,
+	 join_room/1
 	]).
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -106,6 +107,9 @@ is_room_created(Args) ->
 
 list_room_users(Args) ->
     gen_server:call(?MODULE, {account, list_room_users, Args}).
+
+join_room(Args) ->
+    gen_server:call(?MODULE, {account, join_room, Args}).
 
 %%--------------------------------------------------------------------
 handle_call({chatterbox_server, start}, _, State) ->

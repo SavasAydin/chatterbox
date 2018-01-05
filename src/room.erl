@@ -19,6 +19,11 @@ room_loop(Users) ->
 	    Pid ! {users, Users},
 	    room_loop(Users);
 
+	{Pid, join, Username} ->
+	    Message = "account is joined the room",
+	    Pid ! {new_message_is_received, Message},
+	    room_loop([Username | Users]);
+
 	stop ->
 	    ok
     end.

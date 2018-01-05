@@ -17,7 +17,8 @@
 	 create_and_delete_chat_room/1,
 	 list_users_of_newly_created_room/1,
 	 try_to_create_the_same_room_twice/1,
-	 try_to_delete_room_when_not_owner/1
+	 try_to_delete_room_when_not_owner/1,
+	 join_a_chat_room/1
 	]).
 
 -include_lib("common_test/include/ct.hrl").
@@ -129,6 +130,7 @@ list_users_of_newly_created_room(_) ->
 	       {{create_room, [Username, Room]}, "room is created"},
 	       {{list_room_users, [Username, Room]}, [Username]},
 	       {{delete_room, [Username, Room]}, "room is deleted"},
+	       {{logout, Username}, "logged out"},
 	       {{disconnect_from_chatterbox, Username}, success}],
     perform_actions(Actions).
 
@@ -153,6 +155,29 @@ try_to_delete_room_when_not_owner(_) ->
 	       {{connect_to_chatterbox, Username2}, success},
 	       {{delete_room, [Username2, Room]}, "only owner can delete"},
 	       {{is_room_created, [Username2, Room]}, true},
+	       {{disconnect_from_chatterbox, Username1}, success},
+	       {{disconnect_from_chatterbox, Username2}, success}],
+    perform_actions(Actions).
+
+%%--------------------------------------------------------------------
+join_a_chat_room(_) ->
+    Username1 = "Adam",
+    Password1 = "Password1",
+    Username2 = "Carol",
+    Password2 = "Password2",
+    Room = "Koko",
+    Actions = [{{connect_to_chatterbox, Username1}, success},
+	       {{create_account, [Username1, Password1]}, "account is created"},
+	       {{login, [Username1, Password1]}, "logged in"},
+	       {{create_room, [Username1, Room]}, "room is created"},
+	       {{connect_to_chatterbox, Username2}, success},
+	       {{create_account, [Username2, Password2]}, "account is created"},
+	       {{login, [Username2, Password2]}, "logged in"},
+	       {{join_room, [Username2, Room]}, "account is joined the room"},
+	       {{list_room_users, [Username1, Room]}, [Username2, Username1]},
+	       {{delete_room, [Username1, Room]}, "room is deleted"},
+	       {{logout, Username1}, "logged out"},
+	       {{logout, Username2}, "logged out"},
 	       {{disconnect_from_chatterbox, Username1}, success},
 	       {{disconnect_from_chatterbox, Username2}, success}],
     perform_actions(Actions).
@@ -206,5 +231,6 @@ all() ->
      create_and_delete_chat_room,
      list_users_of_newly_created_room,
      try_to_create_the_same_room_twice,
-     try_to_delete_room_when_not_owner
+     try_to_delete_room_when_not_owner,
+     join_a_chat_room
     ].
