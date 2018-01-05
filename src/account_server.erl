@@ -15,6 +15,8 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
 
+-include("chatterbox.hrl").
+
 -define(SERVER, ?MODULE).
 
 -record(state, {}).
@@ -66,7 +68,7 @@ handle_call({login, Args}, _, State) ->
     {reply, Reply, State};
 
 handle_call({is_logged_in, Username}, _, State) ->
-    Reply = chatterbox_lib:is_process_defined(Username),
+    Reply = whereis(?TO_ATOM(Username)) /= undefined,
     {reply, Reply, State};
 
 handle_call({logout, Username}, _, State) ->

@@ -9,16 +9,17 @@
 	]).
 
 -export([create_and_delete_account/1,
-	 try_to_create_the_same_account_twice/1,
+	 try_to_create_same_account_twice/1,
 	 login_and_logout_once_created/1,
 	 try_to_login_when_not_created/1,
 	 try_to_login_with_wrong_password/1,
 	 send_a_message/1,
 	 create_and_delete_chat_room/1,
 	 list_users_of_newly_created_room/1,
-	 try_to_create_the_same_room_twice/1,
+	 try_to_create_same_room_twice/1,
 	 try_to_delete_room_when_not_owner/1,
-	 join_a_chat_room/1
+	 join_a_chat_room/1,
+	 send_message_to_everyone_in_room/1
 	]).
 
 -include_lib("common_test/include/ct.hrl").
@@ -40,7 +41,7 @@ create_and_delete_account(_) ->
     perform_actions(Actions).
 
 %%--------------------------------------------------------------------
-try_to_create_the_same_account_twice(_) ->
+try_to_create_same_account_twice(_) ->
     Username = "Adam",
     Password = "Password",
     Actions = [{{connect_to_chatterbox, Username}, success},
@@ -98,7 +99,7 @@ send_a_message(_) ->
 	       {{connect_to_chatterbox, Username2}, success},
 	       {{create_account, [Username2, Password2]}, "account is created"},
 	       {{login, [Username2, Password2]}, "logged in"},
-	       {{send_message, {Username1, to, Username2, "hello"}}, ok},
+	       {{send_to_account, {Username1, to, Username2, "hello"}}, ok},
 	       {{receive_from_socket, Username1}, "sent"},
 	       {{receive_from_socket, Username2}, "hello"},
 	       {{logout, Username1}, "logged out"},
@@ -135,7 +136,7 @@ list_users_of_newly_created_room(_) ->
     perform_actions(Actions).
 
 %%--------------------------------------------------------------------
-try_to_create_the_same_room_twice(_) ->
+try_to_create_same_room_twice(_) ->
     Username = "Adam",
     Room = "Wilson",
     Actions = [{{connect_to_chatterbox, Username}, success},
@@ -173,13 +174,48 @@ join_a_chat_room(_) ->
 	       {{connect_to_chatterbox, Username2}, success},
 	       {{create_account, [Username2, Password2]}, "account is created"},
 	       {{login, [Username2, Password2]}, "logged in"},
-	       {{join_room, [Username2, Room]}, "account is joined the room"},
+	       {{join_room, [Username2, Room]}, Username2 ++ " is joined the room"},
 	       {{list_room_users, [Username1, Room]}, [Username2, Username1]},
 	       {{delete_room, [Username1, Room]}, "room is deleted"},
 	       {{logout, Username1}, "logged out"},
 	       {{logout, Username2}, "logged out"},
 	       {{disconnect_from_chatterbox, Username1}, success},
 	       {{disconnect_from_chatterbox, Username2}, success}],
+    perform_actions(Actions).
+
+%%--------------------------------------------------------------------
+send_message_to_everyone_in_room(_) ->
+    Username1 = "Adam",
+    Password1 = "Password1",
+    Username2 = "Carol",
+    Password2 = "Password2",
+    Username3 = "Alice",
+    Password3 = "Password3",
+    Room = "Dunbar",
+    Actions = [{{connect_to_chatterbox, Username1}, success},
+	       {{create_account, [Username1, Password1]}, "account is created"},
+	       {{login, [Username1, Password1]}, "logged in"},
+	       {{create_room, [Username1, Room]}, "room is created"},
+	       {{connect_to_chatterbox, Username2}, success},
+	       {{create_account, [Username2, Password2]}, "account is created"},
+	       {{login, [Username2, Password2]}, "logged in"},
+	       {{join_room, [Username2, Room]}, Username2 ++ " is joined the room"},
+	       {{connect_to_chatterbox, Username3}, success},
+	       {{create_account, [Username3, Password3]}, "account is created"},
+	       {{login, [Username3, Password3]}, "logged in"},
+	       {{join_room, [Username3, Room]},  Username3 ++ " is joined the room"},
+	       {{send_to_room, {Username1, to, Room, "hello"}}, ok},
+	       {{receive_from_socket, Username1}, "sent"},
+	       {{receive_from_socket, Username1}, "hello"},
+	       {{receive_from_socket, Username2}, "hello"},
+	       {{receive_from_socket, Username3}, "hello"},
+	       {{delete_room, [Username1, Room]}, "room is deleted"},
+	       {{logout, Username1}, "logged out"},
+	       {{logout, Username2}, "logged out"},
+	       {{logout, Username3}, "logged out"},
+	       {{disconnect_from_chatterbox, Username1}, success},
+	       {{disconnect_from_chatterbox, Username2}, success},
+	       {{disconnect_from_chatterbox, Username3}, success}],
     perform_actions(Actions).
 
 %%--------------------------------------------------------------------
@@ -223,14 +259,15 @@ end_per_testcase(_TestCase, Config) ->
 
 all() ->
     [create_and_delete_account,
-     try_to_create_the_same_account_twice,
+     try_to_create_same_account_twice,
      login_and_logout_once_created,
      try_to_login_when_not_created,
      try_to_login_with_wrong_password,
      send_a_message,
      create_and_delete_chat_room,
      list_users_of_newly_created_room,
-     try_to_create_the_same_room_twice,
+     try_to_create_same_room_twice,
      try_to_delete_room_when_not_owner,
-     join_a_chat_room
+     join_a_chat_room,
+     send_message_to_everyone_in_room
     ].

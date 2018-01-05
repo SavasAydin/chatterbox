@@ -18,7 +18,8 @@
 	 login/1,
 	 logout/1,
 	 is_logged_in/1,
-	 send_message/1,
+	 send_to_account/1,
+	 send_to_room/1,
 	 receive_from_socket/1,
 	 create_room/1,
 	 delete_room/1,
@@ -90,8 +91,11 @@ logout(Username) ->
 is_logged_in(Username) ->
     gen_server:call(?MODULE, {account_server, is_logged_in, Username}).
 
-send_message(Args) ->
+send_to_account(Args) ->
     gen_server:call(?MODULE, {account, send, Args}).
+
+send_to_room(Args) ->
+    gen_server:call(?MODULE, {room, send, Args}).
 
 receive_from_socket(Username) ->
     gen_server:call(?MODULE, {receive_from_socket, Username}).

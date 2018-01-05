@@ -7,43 +7,51 @@
 	 join_room/1
 	]).
 
+-include("chatterbox.hrl").
+
 start_account_process(Username, Socket) ->
     spawn(fun() ->
-		  chatterbox_lib:register_process(Username, self()),
+		  register(?TO_ATOM(Username), self()),
 		  account_loop(Socket)
 	  end).
 
 stop_account_process(Username) ->
-    chatterbox_lib:to_process_name(Username) ! stop.
+    ?TO_ATOM(Username) ! stop.
 
 list_room_users([Username, Roomname]) ->
-    chatterbox_lib:to_process_name(Username) ! {list_users, Roomname},
+    ?TO_ATOM(Username) ! {user_list_request, Roomname},
     no_reply.
 
 send([Username, Message]) ->
-    PN = chatterbox_lib:to_process_name(Username),
-    PN ! {new_message_is_received, Message},
+    ?TO_ATOM(Username) ! {private_message, Message},
     "sent".
 
 join_room([Username, Roomname]) ->
-    chatterbox_lib:to_process_name(Username) ! {join_room, Username, Roomname},
+    ?TO_ATOM(Username) ! {join_room_request, Username, Roomname},
     no_reply.
 
 account_loop(Socket) ->
     receive
-	{new_message_is_received, Msg} ->
-	    gen_tcp:send(Socket, term_to_binary(Msg)),
+	{private_message, Message} ->
+	    gen_tcp:send(Socket, term_to_binary(Message)),
 	    account_loop(Socket);
 
-	{list_users, Room} ->
-	    chatterbox_lib:to_process_name(Room) ! {self(), list_users},
+	{room_message, Message} ->
+	    gen_tcp:send(Socket, term_to_binary(Message)),
 	    account_loop(Socket);
-	{users, Users} ->
+
+	{user_list_request, Room} ->
+	    ?TO_ATOM(Room) ! {self(), user_list_request},
+	    account_loop(Socket);
+	{user_list_response, Users} ->
 	    gen_tcp:send(Socket, term_to_binary(Users)),
 	    account_loop(Socket);
 
-	{join_room, Username, Room} ->
-	    chatterbox_lib:to_process_name(Room) ! {self(), join, Username},
+	{join_room_request, Username, Room} ->
+	    ?TO_ATOM(Room) ! {self(), join_room_request, Username},
+	    account_loop(Socket);
+	{join_room_response, Response} ->
+	    gen_tcp:send(Socket, term_to_binary(Response)),
 	    account_loop(Socket);
 
 	stop ->

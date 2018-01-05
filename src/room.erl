@@ -1,28 +1,40 @@
 -module(room).
 
 -export([start_room_process/2,
-	 stop_room_process/1
+	 stop_room_process/1,
+	 send/1
 	]).
+
+-include("chatterbox.hrl").
 
 start_room_process(Username, Roomname) ->
     spawn(fun() ->
-		  chatterbox_lib:register_process(Roomname, self()),
+		  register(?TO_ATOM(Roomname), self()),
 		  room_loop([Username])
 	  end).
 
 stop_room_process(Roomname) ->
-    chatterbox_lib:to_process_name(Roomname) ! stop.
+    ?TO_ATOM(Roomname) ! stop.
+
+send([Roomname, Message]) ->
+    ?TO_ATOM(Roomname) ! {room_message, Message},
+    "sent".
 
 room_loop(Users) ->
     receive
-	{Pid, list_users} ->
-	    Pid ! {users, Users},
+	{Pid, user_list_request} ->
+	    Pid ! {user_list_response, Users},
 	    room_loop(Users);
 
-	{Pid, join, Username} ->
-	    Message = "account is joined the room",
-	    Pid ! {new_message_is_received, Message},
+	{Pid, join_room_request, Username} ->
+	    Response = Username ++ " is joined the room",
+	    Pid ! {join_room_response, Response},
 	    room_loop([Username | Users]);
+
+	{room_message, Message} ->
+	    Msg = {room_message, Message},
+	    [ ?TO_ATOM(User) ! Msg || User <- Users ],
+	    room_loop(Users);
 
 	stop ->
 	    ok

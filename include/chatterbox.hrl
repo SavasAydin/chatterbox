@@ -1,0 +1,1 @@
+-define(TO_ATOM(Name), chatterbox_lib:to_atom(Name)).
