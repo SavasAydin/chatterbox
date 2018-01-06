@@ -1,5 +1,5 @@
 {application, chatterbox,
- [{description, "An OTP application"},
+ [{description, "A TCP based chat server"},
   {vsn, "0.1.0"},
   {registered, []},
   {mod, { chatterbox_app, []}},
@@ -10,7 +10,7 @@
   {env,[]},
   {modules, []},
 
-  {maintainers, []},
-  {licenses, []},
-  {links, []}
+  {maintainers, ["Savas Aydin"]},
+  {licenses, ["MIT"]},
+  {links, [{"Github", "https://github.com/SavasAydin/chatterbox.git"}]}
  ]}.

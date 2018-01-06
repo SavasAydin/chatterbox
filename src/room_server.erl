@@ -3,7 +3,6 @@
 -behaviour(gen_server).
 
 -export([start_link/0,
-	 stop/1,
 	 create/1,
 	 is_created/1,
 	 delete/1
@@ -24,9 +23,6 @@ init([]) ->
     process_flag(trap_exit, true),
     create_rooms_table_if_not_exist(),
     {ok, #state{}}.
-
-stop(ServerRef) ->
-    gen_server:stop(ServerRef).
 
 create(Args) ->
     gen_server:call(?MODULE, {create, Args}).
