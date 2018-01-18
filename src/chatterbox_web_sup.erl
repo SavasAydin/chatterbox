@@ -1,4 +1,4 @@
--module(chatterbox_sup).
+-module(chatterbox_web_sup).
 
 -behaviour(supervisor).
 
@@ -14,8 +14,8 @@ start_link(Port) ->
 init(Port) ->
     {ok, {{one_for_one, 3, 60},
 	  [{chatterbox,
-	    {chatterbox_server, start_link, [Port]},
-	    permanent, 1000, worker, [chatterbox_server]},
+	    {chatterbox_web_server, start_link, [Port]},
+	    permanent, 1000, worker, [chatterbox_web_server]},
 	   {account,
 	    {account_server, start_link, []},
 	    permanent, 1000, worker, [account_server]},

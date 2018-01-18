@@ -15,12 +15,8 @@
 %%====================================================================
 
 start(_StartType, _StartArgs) ->
-    case application:get_env(chatterbox_port) of
-	undefined ->
-	    chatterbox_sup:start_link(12345);
-	{ok, Port} ->
-	    chatterbox_sup:start_link(Port)
-    end.
+    Port = get_port(),
+    chatterbox_web_sup:start_link(Port).
 
 %%--------------------------------------------------------------------
 stop(_State) ->
@@ -29,3 +25,10 @@ stop(_State) ->
 %%====================================================================
 %% Internal functions
 %%====================================================================
+get_port() ->
+    case application:get_env(chatterbox_port) of
+	undefined ->
+	    12345;
+	{ok, Port} ->
+	    Port
+    end.

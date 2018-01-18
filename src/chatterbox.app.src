@@ -1,5 +1,5 @@
 {application, chatterbox,
- [{description, "A TCP based chat server"},
+ [{description, "A web based chat server"},
   {vsn, "0.1.0"},
   {registered, []},
   {mod, { chatterbox_app, []}},

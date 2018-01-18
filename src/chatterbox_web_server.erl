@@ -1,4 +1,4 @@
--module(chatterbox_server).
+-module(chatterbox_web_server).
 
 -behaviour(gen_server).
 
