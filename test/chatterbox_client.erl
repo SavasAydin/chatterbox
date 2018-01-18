@@ -3,13 +3,6 @@
 -behaviour(gen_server).
 
 -export([start_link/1,
-	 stop/1,
-	 start_chatterbox_server/0,
-	 stop_chatterbox_server/0,
-	 start_room_server/0,
-	 stop_room_server/0,
-	 start_account_server/0,
-	 stop_account_server/0,
 	 connect_to_chatterbox/1,
 	 disconnect_from_chatterbox/1,
 	 create_account/1,
@@ -45,27 +38,6 @@ start_link(Port) ->
 init(Port) ->
     process_flag(trap_exit, true),
     {ok, #state{port = Port}}.
-
-stop(ServerRef) ->
-    gen_server:stop(ServerRef).
-
-start_chatterbox_server() ->
-    gen_server:call(?MODULE, {chatterbox_server, start}).
-
-stop_chatterbox_server() ->
-    stop_if_started(chatterbox_server).
-
-start_room_server() ->
-    gen_server:call(?MODULE, {room_server, start}).
-
-stop_room_server() ->
-    stop_if_started(room_server).
-
-start_account_server() ->
-    gen_server:call(?MODULE, {account_server, start}).
-
-stop_account_server() ->
-    stop_if_started(account_server).
 
 connect_to_chatterbox(Username) ->
     gen_server:call(?MODULE, {connect_to_chatterbox, Username}).
@@ -116,34 +88,6 @@ join_room(Args) ->
     gen_server:call(?MODULE, {account, join_room, Args}).
 
 %%--------------------------------------------------------------------
-handle_call({chatterbox_server, start}, _, State) ->
-    Port = State#state.port,
-    {ok, Pid} = chatterbox_server:start_link(Port),
-    {reply, ok, State#state{chatterbox_server = Pid}};
-
-handle_call({chatterbox_server, stop}, _, State) ->
-    Pid = State#state.chatterbox_server,
-    ok = chatterbox_server:stop(Pid),
-    {reply, ok, State#state{chatterbox_server = undefined}};
-
-handle_call({room_server, start}, _, State) ->
-    {ok, Pid} = room_server:start_link(),
-    {reply, ok, State#state{room_server = Pid}};
-
-handle_call({room_server, stop}, _, State) ->
-    Pid = State#state.room_server,
-    ok = room_server:stop(Pid),
-    {reply, ok, State#state{room_server = undefined}};
-
-handle_call({account_server, start}, _, State) ->
-    {ok, Pid} = account_server:start_link(),
-    {reply, ok, State#state{account_server = Pid}};
-
-handle_call({account_server, stop}, _, State) ->
-    Pid = State#state.account_server,
-    ok = account_server:stop(Pid),
-    {reply, ok, State#state{account_server = undefined}};
-
 handle_call({connect_to_chatterbox, Username}, _, State) ->
     IpAddress = get_ip_address(),
     Port = State#state.port,
@@ -222,12 +166,4 @@ receive_reply(Socket) ->
 	    binary_to_term(Reply)
     after 100 ->
 	    {error, client_timeout}
-    end.
-
-stop_if_started(Server) ->
-    case whereis(Server) of
-	undefined ->
-	    ok;
-	_  ->
-	    gen_server:call(?MODULE, {Server, stop})
     end.

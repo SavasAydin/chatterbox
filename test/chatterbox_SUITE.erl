@@ -243,15 +243,13 @@ end_per_suite(_Config) ->
     ok.
 
 init_per_testcase(_TestCase, Config) ->
-    {ok, Pid} = chatterbox_client:start_link(?PORT),
+    {ok, _} = chatterbox_client:start_link(?PORT),
     ok = application:start(chatterbox),
-    [{client_pid, Pid} | Config].
+    Config.
 
 end_per_testcase(_TestCase, Config) ->
     ok = application:stop(chatterbox),
-    Pid = proplists:get_value(client_pid, Config),
-    ok  = chatterbox_client:stop(Pid),
-    proplists:delete(client_pid, Config).
+    Config.
 
 all() ->
     [create_and_delete_account,
