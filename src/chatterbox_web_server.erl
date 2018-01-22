@@ -17,6 +17,17 @@ stop() ->
     mochiweb_http:stop(?MODULE).
 
 loop(Req, DocRoot) ->
+    Path = Req:get(path),
+    case Path of
+	"/create_account" ->
+	    Reply = [{struct, [{string, <<"account is created">>}]}],
+	    Json = mochijson2:encode(Reply),
+	    Req:respond({200, [{"Content-Type", "application/json"}], Json});
+	_ ->
+	    loop2(Req, DocRoot)
+    end.
+
+loop2(Req, DocRoot) ->
     io:format(user,
               "DocRoot is ~p~n"
               "Req is ~p~n",
@@ -25,19 +36,39 @@ loop(Req, DocRoot) ->
     try
         case Req:get(method) of
             Method when Method =:= 'GET'; Method =:= 'HEAD' ->
-                case Path of
+                case Path of		    
                   "hello_world" ->
-                    Req:respond({200, [{"Content-Type", "text/plain"}],
-                    "Hello world!\n"});
-                    _ ->
+			io:format(user,
+				  "GET method and path is ~p~n",
+				  [Path]),
+			Req:respond({200, [{"Content-Type", "text/plain"}],
+				     "Hello world!\n"});
+                  "create_account" ->
+			io:format(user,
+				  "GET method and path is create_account~n",[]),
+			Req:respond({200, [{"Content-Type", "text/plain"}],
+				     "Created!\n"});
+
+                    Other ->
+			io:format(user,
+				  "GET method and path is ~p~n",
+				  [Other]),
+			
                         Req:serve_file(Path, DocRoot)
                 end;
             'POST' ->
                 case Path of
                     _ ->
+			io:format(user,
+				  "POST method and path is ~p~n",
+				  [Path]),
                         Req:not_found()
                 end;
-            _ ->
+            OtherMethod ->
+		io:format(user,
+			  "method is ~p~n",
+			  [OtherMethod]),
+		
                 Req:respond({501, [], []})
         end
     catch

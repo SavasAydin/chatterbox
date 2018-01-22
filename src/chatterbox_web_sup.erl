@@ -27,12 +27,12 @@ init(Port) ->
 web_specs(Mod, Port) ->
     WebConfig = [{ip, {0,0,0,0}},
                  {port, Port},
-                 {docroot, local_path(Mod, ["priv", "www"])}],
+                 {docroot, local_path(["priv", "www"])}],
     {Mod,
      {Mod, start, [WebConfig]},
      permanent, 5000, worker, dynamic}.
 
-local_path(Module, Components) ->
+local_path(Components) ->
     {file, Loaded} = code:is_loaded(?MODULE),
     ModPath = filename:dirname(filename:dirname(Loaded)),
     filename:join([ModPath | Components]).

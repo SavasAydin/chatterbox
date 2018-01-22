@@ -1,6 +1,8 @@
 <!doctype html>
 <html>
   <head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
     <title>Chatterbox Demo</title>
     <style>
 
@@ -32,15 +34,48 @@
     <h1>Chatterbox with Mochiweb Demo</h1>
 
     <div id="container">
-      <input type="text" id="name" placeholder="Account name"><br>
-      <input type="text" id="password" placeholder="Password"><br>
-      <button id="createAccountBtn">Create Account</button><br>
-
+      <form id="create_account_form" method="post">
+<!--      <input id="name" type="text" name="name" placeholder="Account name"><br>
+      <input id="password" type="text" name="password" placeholder="Password"><br> -->
+      <input type="button" id="btn1" value="Create Account"><br>
+      </form>
     </div>
 
     <hr/>
 
     <script >
+      $(document).ready(function(){
+
+      $('#btn1').click(function(){
+      $.ajax({
+      url:"create_account",
+      dataType:"json",
+      success:function(x){
+      handle_reply(x);
+      }
+      });
+      });
+
+      function handle_reply(x){
+      var data = JSON.stringify(x);
+      alert("got " + data);
+      };
+      
+      /*
+      var json = {
+      "action":create_account,
+      "doc": {
+      "text":username,
+      "pass":password
+      }};
+      var data = JSON.stringify(json);
+      $.post("/chatterbox", {"json":data}, callback, "json");
+      */
+      
+      
+      });
+      
+      
     </script>
   </body>
 </html>
