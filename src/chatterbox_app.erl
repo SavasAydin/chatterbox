@@ -28,7 +28,7 @@ stop(_State) ->
 get_port() ->
     case application:get_env(chatterbox_port) of
 	undefined ->
-	    12345;
+	    8080;
 	{ok, Port} ->
 	    Port
     end.
