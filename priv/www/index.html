@@ -22,60 +22,64 @@
       margin-bottom: 10px
       }
 
-      #container{
-      width: 90%;
-      margin:auto;
-      padding: 10px;
-      }
-
     </style>
   </head>
   <body>
     <h1>Chatterbox with Mochiweb Demo</h1>
 
-    <div id="container">
-      <form id="create_account_form" method="post">
-<!--      <input id="name" type="text" name="name" placeholder="Account name"><br>
-      <input id="password" type="text" name="password" placeholder="Password"><br> -->
-      <input type="button" id="btn1" value="Create Account"><br>
-      </form>
-    </div>
+    <form id="create_account_form" method="post">
+      <input id="name" type="text" name="name" placeholder="Account name"><br>
+      <input id="password" type="text" name="password" placeholder="Password"><br>
+      <button type="button" onclick="createAccount()">Create Account</button>
+      <p id="demo"></p>
+    </form>
 
     <hr/>
 
     <script >
       $(document).ready(function(){
+      $("button").click(function(){
 
-      $('#btn1').click(function(){
-      $.ajax({
-      url:"create_account",
-      dataType:"json",
-      success:function(x){
-      handle_reply(x);
-      }
-      });
-      });
-
-      function handle_reply(x){
-      var data = JSON.stringify(x);
-      alert("got " + data);
+      var name = document.getElementById("name").value;
+      var password = document.getElementById("password").value;
+      console.log("username " + name + " password " + password);
+      var formdata = {
+      'name': name,
+      'password': password
       };
-      
-      /*
-      var json = {
-      "action":create_account,
-      "doc": {
-      "text":username,
-      "pass":password
-      }};
-      var data = JSON.stringify(json);
-      $.post("/chatterbox", {"json":data}, callback, "json");
-      */
-      
-      
+
+      $.post("create_account", formdata, function(data, status){
+      var response = JSON.stringify(data);
+      console.log("response is " + response.message);
+      console.log("data is " + data);
+      console.log("data message is " + data.message);
+      alert("Response: " + response + "\nStatus: " + status);
       });
-      
-      
+      });
+      });
+
+      /*
+      function createAccount(){
+      console.log("createAccount is clicked");
+      var name = document.getElementById("name").value;
+      var password = document.getElementById("password").value;
+
+      console.log("username " + name + " password " + password);
+      var formdata = {
+      'name': name,
+      'password': password
+      };
+
+      var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechang = function() {
+      if (this.readyState == 4 && this.status == 200) {
+      document.getElementById("demo").innerHTML = this.responseText;
+      }
+      };
+      xhttp.open("GET", formdata, true);
+      xhttp.send();
+      }
+      */
     </script>
   </body>
 </html>
