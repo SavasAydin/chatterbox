@@ -6,80 +6,138 @@
     <title>Chatterbox Demo</title>
     <style>
 
-      body{
-      font-size: 17px;
-      font-family: arial;
-      background: #f4f4f4;
-      line-height: 1.5em;
-      }
+    body{
+	font-size: 17px;
+	font-family: arial;
+	background: #f4f4f4;
+	line-height: 1.5em;
+    }
 
-      header{
-      background: #333;
-      color: #fff;
-      padding: 20px;
-      text-align: center;
-      border-bottom: 4px #000 solid;
-      margin-bottom: 10px
-      }
+    button{
+	background-color: #4CAF50;
+	font-size: 12px;
+	color: white;
+	padding: 14px 20px;
+	margin: 8px 0;
+	border: none;
+	cursor: pointer;
+	width: 100%;
+    }
+
+    input[type=text]{
+	width: 100%;
+	padding: 12px 20px;
+	margin: 8px 0;
+	display: inline-block;
+	border: 1px solid #ccc;
+	box-sizing: border-box;
+    }
+
+    #init{
+	padding: 14px;
+	width: 50%;
+	text-align: center;
+    }
+
+    .modal{
+	display: none;
+	position: fixed;
+	z-index: 1;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	overflow: auto;
+	background-color: rgb(0,0,0);
+	background-color: rgba(0,0,0,0.4);
+	padding-top: 60px;
+    }
+
+    .modal_content{
+	background-color: #fefefe;
+	margin: 5% auto 15% auto; // 5% from top, 15% from bottom and centered
+	border: 1px solid #888;
+	width: 80%;
+	padding: 16px;
+    }
 
     </style>
   </head>
   <body>
     <h1>Chatterbox with Mochiweb Demo</h1>
 
-    <form id="create_account_form" method="post">
-      <input id="name" type="text" name="name" placeholder="Account name"><br>
-      <input id="password" type="text" name="password" placeholder="Password"><br>
-      <button type="button" onclick="createAccount()">Create Account</button>
-      <p id="demo"></p>
-    </form>
+    <div id="init">
+      <label>Do you want to join chatterbox?</label><br>
+      <button onclick="displayCreateAccount()">Create Account</button><br>
+      <label>Already have an account?</label><br>
+      <button onclick="displayLogin()">Login</button><br>
+    </div>
+
+    <div id="create_account" class="modal" method="post">
+      <form id="create_account_form" class="modal_content">
+	<label><b>Username</b></label><br>
+	<input id="c_name" type="text" name="c_name" placeholder="Enter Username"><br>
+	<label><b>Password</b></label><br>
+	<input id="c_password" type="text" name="c_password" placeholder="Enter Password"><br>
+	<button id="create_account_btn" type="button">Create Account</button>
+      </form>
+    </div>
+
+
+    <div id="login" class="modal">
+      <form id="login_form" class="modal_content">
+	<label>Username</label>
+	<input id="l_username" type="text" name="l_username" placeholder="Enter Username">
+	<label>Password</label>
+	<input id="l_password" type="text" name="l_password" placeholder="Enter Password"><br>
+	<button id="login_btn" type="button">Login</button>
+      </form>
+    </div>
 
     <hr/>
 
     <script >
-      $(document).ready(function(){
-      $("button").click(function(){
+    var modals = document.getElementsByClassName('modal');
 
-      var name = document.getElementById("name").value;
-      var password = document.getElementById("password").value;
-      console.log("username " + name + " password " + password);
-      var formdata = {
-      'name': name,
-      'password': password
-      };
+    window.onclick = function(e){
+	for (var i = 0; i < modals.length; i++) {
+	    if(e.target == modals[i]){
+		modals[i].style.display = 'none';
+	    }
+	}
+    }
 
-      $.post("create_account", formdata, function(data, status){
-      var response = JSON.stringify(data);
-      console.log("response is " + response.message);
-      console.log("data is " + data);
-      console.log("data message is " + data.message);
-      alert("Response: " + response + "\nStatus: " + status);
-      });
-      });
-      });
+    function displayCreateAccount(){
+	document.getElementById('create_account').style.display = 'block';
+    };
 
-      /*
-      function createAccount(){
-      console.log("createAccount is clicked");
-      var name = document.getElementById("name").value;
-      var password = document.getElementById("password").value;
+    function displayLogin(){
+	document.getElementById('login').style.display = 'block';
+    };
 
-      console.log("username " + name + " password " + password);
-      var formdata = {
-      'name': name,
-      'password': password
-      };
+    $(document).ready(function(){
 
-      var xhttp = new XMLHttpRequest();
-      xhttp.onreadystatechang = function() {
-      if (this.readyState == 4 && this.status == 200) {
-      document.getElementById("demo").innerHTML = this.responseText;
-      }
-      };
-      xhttp.open("GET", formdata, true);
-      xhttp.send();
-      }
-      */
+	$('#create_account_btn').click(function(){
+	    var name = document.getElementById("c_name").value;
+	    var password = document.getElementById("c_password").value;
+	    console.log("username " + name + " password " + password);
+	    var formdata = {
+		'name': name,
+		'password': password
+	    };
+
+	    $.post("create_account", formdata, function(data, status){
+		var response = JSON.stringify(data);
+		console.log("response is " + response);
+
+		var caModal = document.getElementById('create_account');
+		caModal.style.display = 'none';
+		alert(response);
+	    });
+	});
+    });
+
+
     </script>
   </body>
 </html>
