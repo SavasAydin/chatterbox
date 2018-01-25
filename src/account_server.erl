@@ -47,7 +47,7 @@ logout(Username) ->
     gen_server:call(?MODULE, {logout, Username}).
 
 %%--------------------------------------------------------------------
-handle_call({create, [Username, Password]}, _, State) ->
+handle_call({create, [{"name", Username}, {"password", Password}]}, _, State) ->
     Reply = create_if_not_exist(Username, Password),
     {reply, Reply, State};
 
@@ -59,8 +59,8 @@ handle_call({delete, Username}, _, State) ->
     true = ets:delete(accounts, Username),
     {reply, "account is deleted", State};
 
-handle_call({login, Args}, _, State) ->
-    Reply = login_if_authorized(Args),
+handle_call({login, [{"name", Username}, {"password", Password}]}, _, State) ->
+    Reply = login_if_authorized(Username, Password),
     {reply, Reply, State};
 
 handle_call({is_logged_in, Username}, _, State) ->
@@ -104,10 +104,10 @@ create_if_not_exist(Username, Password) ->
 	    "username is taken"
     end.
 
-login_if_authorized([Socket, Username, Password]) ->
+login_if_authorized(Username, Password) ->
     case ets:lookup(accounts, Username) of
 	[{Username, Password}] ->
-	    account:start_account_process(Username, Socket),
+	    account:start_account_process(Username, socket),
 	    "logged in";
 	[_] ->
 	    "username or password is wrong";

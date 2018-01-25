@@ -76,9 +76,9 @@
     <div id="create_account" class="modal" method="post">
       <form id="create_account_form" class="modal_content">
 	<label><b>Username</b></label><br>
-	<input id="c_name" type="text" name="c_name" placeholder="Enter Username"><br>
+	<input id="c_name" type="text" placeholder="Enter Username"><br>
 	<label><b>Password</b></label><br>
-	<input id="c_password" type="text" name="c_password" placeholder="Enter Password"><br>
+	<input id="c_password" type="text" placeholder="Enter Password"><br>
 	<button id="create_account_btn" type="button">Create Account</button>
       </form>
     </div>
@@ -87,9 +87,9 @@
     <div id="login" class="modal">
       <form id="login_form" class="modal_content">
 	<label>Username</label>
-	<input id="l_username" type="text" name="l_username" placeholder="Enter Username">
+	<input id="l_name" type="text" placeholder="Enter Username">
 	<label>Password</label>
-	<input id="l_password" type="text" name="l_password" placeholder="Enter Password"><br>
+	<input id="l_password" type="text"  placeholder="Enter Password"><br>
 	<button id="login_btn" type="button">Login</button>
       </form>
     </div>
@@ -121,20 +121,37 @@
 	    var name = document.getElementById("c_name").value;
 	    var password = document.getElementById("c_password").value;
 	    console.log("username " + name + " password " + password);
-	    var formdata = {
-		'name': name,
-		'password': password
-	    };
+	    var formdata = {'name': name,
+			    'password': password};
 
-	    $.post("create_account", formdata, function(data, status){
+	    console.log('formdata ' + formdata);
+
+	    $.post("account_server create", formdata, function(data){
+		var response = JSON.stringify(data);
+		console.log("response is " + response);
+		
+		var caModal = document.getElementById('create_account');
+		caModal.style.display = 'none'}, "json");
+	});
+
+	$('#login_btn').click(function(){
+	    var name = document.getElementById("l_name").value;
+	    var password = document.getElementById("l_password").value;
+	    console.log("logining.. username " + name + " password " + password);
+	    var formdata = {'name': name,
+			    'password': password};
+
+	    console.log('formdata ' + formdata);
+
+	    $.post("account_server login", formdata, function(data){
 		var response = JSON.stringify(data);
 		console.log("response is " + response);
 
-		var caModal = document.getElementById('create_account');
-		caModal.style.display = 'none';
-		alert(response);
-	    });
+		var caModal = document.getElementById('login');
+		caModal.style.display = 'none'}, "json");
 	});
+	
+
     });
 
 
