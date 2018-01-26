@@ -36,6 +36,7 @@
     #init{
 	padding: 14px;
 	width: 50%;
+	margin: 0px auto;
 	text-align: center;
     }
 
@@ -93,66 +94,61 @@
 	<button id="login_btn" type="button">Login</button>
       </form>
     </div>
-
     <hr/>
 
     <script >
-    var modals = document.getElementsByClassName('modal');
-
-    window.onclick = function(e){
-	for (var i = 0; i < modals.length; i++) {
-	    if(e.target == modals[i]){
-		modals[i].style.display = 'none';
+    function closeModalIfClickedOutOfModal(){
+	var modals = document.getElementsByClassName('modal');
+	window.onclick = function(event){
+	    for (var i = 0; i < modals.length; i++) {
+		if(event.target == modals[i]){
+		    modals[i].style.display = 'none';
+		}
 	    }
 	}
     }
 
     function displayCreateAccount(){
 	document.getElementById('create_account').style.display = 'block';
-    };
+    }
 
     function displayLogin(){
 	document.getElementById('login').style.display = 'block';
-    };
+    }
+
+    function create_account(){
+	var name = document.getElementById("c_name").value;
+	var password = document.getElementById("c_password").value;
+	console.log("creating.. username " + name + " password " + password);
+	var formdata = {'name': name, 'password': password};
+	$.post("account_server create", formdata, function(data){
+	    var response = JSON.stringify(data);
+	    console.log("response is " + response);
+	    var caModal = document.getElementById('create_account');
+	    caModal.style.display = 'none'}, "json");
+    }
+
+    function login(){
+	var name = document.getElementById("l_name").value;
+	var password = document.getElementById("l_password").value;
+	console.log("logining.. username " + name + " password " + password);
+	var formdata = {'name': name, 'password': password};
+	$.post("account_server login", formdata, function(data){
+	    var response = JSON.stringify(data);
+	    console.log("response is " + response);
+	    var caModal = document.getElementById('login');
+	    caModal.style.display = 'none'}, "json");
+    }
 
     $(document).ready(function(){
 
-	$('#create_account_btn').click(function(){
-	    var name = document.getElementById("c_name").value;
-	    var password = document.getElementById("c_password").value;
-	    console.log("username " + name + " password " + password);
-	    var formdata = {'name': name,
-			    'password': password};
+	closeModalIfClickedOutOfModal()
 
-	    console.log('formdata ' + formdata);
+	$('#create_account_btn').click(create_account)
 
-	    $.post("account_server create", formdata, function(data){
-		var response = JSON.stringify(data);
-		console.log("response is " + response);
-		
-		var caModal = document.getElementById('create_account');
-		caModal.style.display = 'none'}, "json");
-	});
+	$('#login_btn').click(login)
 
-	$('#login_btn').click(function(){
-	    var name = document.getElementById("l_name").value;
-	    var password = document.getElementById("l_password").value;
-	    console.log("logining.. username " + name + " password " + password);
-	    var formdata = {'name': name,
-			    'password': password};
-
-	    console.log('formdata ' + formdata);
-
-	    $.post("account_server login", formdata, function(data){
-		var response = JSON.stringify(data);
-		console.log("response is " + response);
-
-		var caModal = document.getElementById('login');
-		caModal.style.display = 'none'}, "json");
-	});
-	
-
-    });
+    })
 
 
     </script>
