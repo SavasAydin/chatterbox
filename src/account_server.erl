@@ -3,16 +3,16 @@
 -behaviour(gen_server).
 
 -export([start_link/0,
-	 create/1,
-	 is_created/1,
-	 delete/1,
-	 login/1,
-	 is_logged_in/1,
-	 logout/1
-	]).
+         create/1,
+         is_created/1,
+         delete/1,
+         login/1,
+         is_logged_in/1,
+         logout/1
+        ]).
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
-	 terminate/2, code_change/3]).
+         terminate/2, code_change/3]).
 
 -include("chatterbox.hrl").
 
@@ -25,7 +25,6 @@ start_link() ->
 
 init([]) ->
     process_flag(trap_exit, true),
-    create_accounts_table_if_not_exist(),
     {ok, #state{}}.
 
 create(User) ->
@@ -92,25 +91,25 @@ code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
 %%%===================================================================
-create_accounts_table_if_not_exist() ->
-    chatterbox_lib:create_table_if_not_exist(accounts).
-
 create_if_not_exist(Username, Password) ->
     case ets:lookup(accounts, Username) of
-	[] ->
-	    true = ets:insert(accounts, {Username, Password}),
-	    "account is created";
-	_ ->
-	    "username is taken"
+        [] ->
+            true = ets:insert(accounts, {Username, Password}),
+            chatterbox_debugger:increment_created_accounts(),
+            "account is created";
+        _ ->
+            chatterbox_debugger:increment_failed_account_creation_attempts(),
+            "username is taken"
     end.
 
 login_if_authorized(Username, Password) ->
     case ets:lookup(accounts, Username) of
-	[{Username, Password}] ->
-	    account:start_account_process(Username, socket),
-	    "logged in";
-	[_] ->
-	    "username or password is wrong";
-	[] ->
-	    "account must be created first"
+        [{Username, Password}] ->
+            account:start_account_process(Username, socket),
+            chatterbox_debugger:increment_logged_accounts(),
+            "logged in";
+        [_] ->
+            "username or password is wrong";
+        [] ->
+            "account must be created first"
     end.

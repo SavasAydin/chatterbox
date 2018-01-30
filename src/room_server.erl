@@ -3,13 +3,13 @@
 -behaviour(gen_server).
 
 -export([start_link/0,
-	 create/1,
-	 is_created/1,
-	 delete/1
-	]).
+         create/1,
+         is_created/1,
+         delete/1
+        ]).
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
-	 terminate/2, code_change/3]).
+         terminate/2, code_change/3]).
 
 -define(SERVER, ?MODULE).
 
@@ -21,7 +21,6 @@ start_link() ->
 
 init([]) ->
     process_flag(trap_exit, true),
-    create_rooms_table_if_not_exist(),
     {ok, #state{}}.
 
 create(Args) ->
@@ -67,28 +66,26 @@ code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
 %%%===================================================================
-create_rooms_table_if_not_exist() ->
-    Opts = [public, named_table, {keypos, 2}],
-    chatterbox_lib:create_table_if_not_exist(rooms, Opts).
-
 create_if_not_exist(Username, Roomname) ->
     case ets:lookup(rooms, Roomname) of
-	[] ->
-	    Room = #room{name = Roomname, owner = Username},
-	    true = ets:insert(rooms, Room),
-	    room:start_room_process(Username, Roomname),
-	    "room is created";
-	_ ->
-	    "roomname is taken"
+        [] ->
+            Room = #room{name = Roomname, owner = Username},
+            true = ets:insert(rooms, Room),
+            room:start_room_process(Username, Roomname),
+            chatterbox_debugger:increment_created_rooms(),
+            "room is created";
+        _ ->
+            chatterbox_debugger:increment_failed_room_creation_attempts(),
+            "roomname is taken"
     end.
 
 delete_if_owner(Username, Roomname) ->
     [Room] = ets:lookup(rooms, Roomname),
     case Room#room.owner of
-	Username ->
-	    room:stop_room_process(Roomname),
-	    true = ets:delete(rooms, Roomname),
-	    "room is deleted";
-	_ ->
-	    "only owner can delete"
+        Username ->
+            room:stop_room_process(Roomname),
+            true = ets:delete(rooms, Roomname),
+            "room is deleted";
+        _ ->
+            "only owner can delete"
     end.

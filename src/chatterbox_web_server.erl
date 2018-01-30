@@ -2,6 +2,7 @@
 -export([start/1, stop/0, loop/2]).
 
 start(Options) ->
+    ensure_tables(),
     {DocRoot, Options1} = get_option(docroot, Options),
     Loop = fun (Req) -> ?MODULE:loop(Req, DocRoot) end,
     mochiweb_http:start([{name, ?MODULE}, {loop, Loop} | Options1]).
@@ -43,6 +44,11 @@ loop(Req, DocRoot) ->
             ErrorResponse = "request failed, sorry\n",
             Req:respond({500, [{"Content-Type", "text/plain"}], ErrorResponse})
     end.
+
+ensure_tables() ->
+    chatterbox_debugger:create_table(),
+    account:create_table(),
+    room:create_table().
 
 get_option(Option, Options) ->
     {proplists:get_value(Option, Options), proplists:delete(Option, Options)}.
