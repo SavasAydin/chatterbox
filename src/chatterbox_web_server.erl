@@ -13,35 +13,35 @@ loop(Req, DocRoot) ->
     Method = Req:get(method),
     [$/ | Path] = Req:get(path),
     try
-	case Method of
-	    'POST' ->
-		[M, F] = string:tokens(Path, " "),
-		Module = list_to_atom(M),
-		Fun = list_to_atom(F),
-		Received = Req:parse_post(),
-		Response = Module:Fun(Received),
-		io:format(user,
-			  "Received is ~p~n"
-			  "Response is ~p~n",
-			  [Received, Response]),
-		Reply = [{struct, [{response, list_to_binary(Response)}]}],
-		Json = mochijson2:encode(Reply),
-		Req:respond({200, [{"Content-Type", "application/json"}], Json});
-	    _ ->
-		io:format(user,
-			  "GET method and path is ~p~n",
-			  [Path]),
-		Req:serve_file(Path, DocRoot)
-	end
+        case Method of
+            'POST' ->
+                [M, F] = string:tokens(Path, " "),
+                Module = list_to_atom(M),
+                Fun = list_to_atom(F),
+                Received = Req:parse_post(),
+                Response = Module:Fun(Received),
+                io:format(user,
+                          "Received is ~p~n"
+                          "Response is ~p~n",
+                          [Received, Response]),
+                Reply = [{struct, [{response, list_to_binary(Response)}]}],
+                Json = mochijson2:encode(Reply),
+                Req:respond({200, [{"Content-Type", "application/json"}], Json});
+            _ ->
+                io:format(user,
+                          "GET method and path is ~p~n",
+                          [Path]),
+                Req:serve_file(Path, DocRoot)
+        end
     catch
-	Type:What ->
-	    Report = ["web request failed",
-		      {path, Path},
-		      {type, Type}, {what, What},
-		      {trace, erlang:get_stacktrace()}],
-	    error_logger:error_report(Report),
-	    Response = "request failed, sorry\n",
-	    Req:respond({500, [{"Content-Type", "text/plain"}], Response})
+        Type:What ->
+            Report = ["web request failed",
+                      {path, Path},
+                      {type, Type}, {what, What},
+                      {trace, erlang:get_stacktrace()}],
+            error_logger:error_report(Report),
+            ErrorResponse = "request failed, sorry\n",
+            Req:respond({500, [{"Content-Type", "text/plain"}], ErrorResponse})
     end.
 
 get_option(Option, Options) ->
