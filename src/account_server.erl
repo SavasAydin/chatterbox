@@ -50,11 +50,11 @@ handle_call({create, [{"name", Username}, {"password", Password}]}, _, State) ->
     Reply = create_if_not_exist(Username, Password),
     {reply, Reply, State};
 
-handle_call({is_created, Username}, _, State) ->
+handle_call({is_created, {"name", Username}}, _, State) ->
     Reply = ets:lookup(accounts, Username) /= [],
     {reply, Reply, State};
 
-handle_call({delete, Username}, _, State) ->
+handle_call({delete, {"name", Username}}, _, State) ->
     true = ets:delete(accounts, Username),
     {reply, "account is deleted", State};
 
@@ -62,11 +62,11 @@ handle_call({login, [{"name", Username}, {"password", Password}]}, _, State) ->
     Reply = login_if_authorized(Username, Password),
     {reply, Reply, State};
 
-handle_call({is_logged_in, Username}, _, State) ->
+handle_call({is_logged_in, {"name", Username}}, _, State) ->
     Reply = whereis(?TO_ATOM(Username)) /= undefined,
     {reply, Reply, State};
 
-handle_call({logout, Username}, _, State) ->
+handle_call({logout, {"name", Username}}, _, State) ->
     account:stop_account_process(Username),
     {reply, "logged out", State};
 
@@ -105,7 +105,7 @@ create_if_not_exist(Username, Password) ->
 login_if_authorized(Username, Password) ->
     case ets:lookup(accounts, Username) of
         [{Username, Password}] ->
-            account:start_account_process(Username, socket),
+            account:start_account_process(Username),
             chatterbox_debugger:increment_logged_accounts(),
             "logged in";
         [_] ->

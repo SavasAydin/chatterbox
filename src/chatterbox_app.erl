@@ -26,7 +26,7 @@ stop(_State) ->
 %% Internal functions
 %%====================================================================
 get_port() ->
-    case application:get_env(chatterbox_port) of
+    case application:get_env(chatterbox, port) of
 	undefined ->
 	    8080;
 	{ok, Port} ->

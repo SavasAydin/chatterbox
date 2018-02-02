@@ -2,9 +2,7 @@
 
 -behaviour(gen_server).
 
--export([start_link/1,
-	 connect_to_chatterbox/1,
-	 disconnect_from_chatterbox/1,
+-export([start_link/0,
 	 create_account/1,
 	 delete_account/1,
 	 is_account_created/1,
@@ -28,22 +26,14 @@
 
 -record(state, {chatterbox_server,
 		room_server,
-		account_server,
-		port,
-		sockets = []}).
+		account_server}).
 
-start_link(Port) ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, Port, []).
+start_link() ->
+    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
-init(Port) ->
+init([]) ->
     process_flag(trap_exit, true),
-    {ok, #state{port = Port}}.
-
-connect_to_chatterbox(Username) ->
-    gen_server:call(?MODULE, {connect_to_chatterbox, Username}).
-
-disconnect_from_chatterbox(Username) ->
-    gen_server:call(?MODULE, {disconnect_from_chatterbox, Username}).
+    {ok, #state{}}.
 
 create_account(Args) ->
     gen_server:call(?MODULE, {account_server, create, Args}).
@@ -88,39 +78,10 @@ join_room(Args) ->
     gen_server:call(?MODULE, {account, join_room, Args}).
 
 %%--------------------------------------------------------------------
-handle_call({connect_to_chatterbox, Username}, _, State) ->
-    IpAddress = get_ip_address(),
-    Port = State#state.port,
-    {ok, Socket} = gen_tcp:connect(IpAddress, Port, [binary]),
-    Sockets = State#state.sockets,
-    {reply, success, State#state{sockets = [{Username, Socket} | Sockets]}};
-
-handle_call({disconnect_from_chatterbox, Username}, _, State) ->
-    Sockets = State#state.sockets,
-    Socket = proplists:get_value(Username, Sockets),
-    ok = gen_tcp:close(Socket),
-    NewSockets = proplists:delete(Username, Sockets),
-    {reply, success, State#state{sockets = NewSockets}};
-
-handle_call({M, F, {Username1, to, Username2, Message}}, _, State) ->
-    Sockets = State#state.sockets,
-    Socket1 = proplists:get_value(Username1, Sockets),
-    ok = gen_tcp:send(Socket1, term_to_binary({M, F, [Username2, Message]})),
-    {reply, ok, State};
-
-handle_call({receive_from_socket, Username}, _, State) ->
-    Sockets = State#state.sockets,
-    Socket = proplists:get_value(Username, Sockets),
-    Reply = receive_reply(Socket),
-    {reply, Reply, State};
-
-handle_call(Command, _, State) ->
-    ct:pal("Command to send is ~p~n", [Command]),
-    Sockets = State#state.sockets,
-    Username = get_username(Command),
-    Socket = proplists:get_value(Username, Sockets),
-    ok = gen_tcp:send(Socket, term_to_binary(Command)),
-    Reply = receive_reply(Socket),
+handle_call({M, F, Args}, _, State) ->
+    ct:pal("Command to send is ~p:~p(~p)~n", [M, F, Args]),
+    Reply = M:F(Args),
+    ct:pal("Reply is ~p~n", [Reply]),
     {reply, Reply, State}.
 
 %%--------------------------------------------------------------------
@@ -132,38 +93,8 @@ handle_info(_Info, State) ->
     {noreply, State}.
 
 %%--------------------------------------------------------------------
-terminate(_, State) ->
-    Sockets = State#state.sockets,
-    [ close_sockets(Socket) || {_, Socket} <- Sockets ].
-
-close_sockets(Socket) ->
-    case is_port(Socket) of
-	true ->
-	    gen_tcp:close(Socket);
-	false ->
-	    ok
-    end.
-
+terminate(_, _) ->
+    ok.
 %%--------------------------------------------------------------------
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
-
-%%--------------------------------------------------------------------
-get_ip_address() ->
-    {ok, Host} = inet:gethostname(),
-    {ok, Address} = inet:getaddr(Host, inet),
-    Address.
-
-get_username({_, _, [Username, _]}) ->
-    Username;
-get_username({_, _, Username}) ->
-    Username.
-
-receive_reply(Socket) ->
-    inet:setopts(Socket, [{active, once}]),
-    receive
-	{tcp, Socket, Reply} ->
-	    binary_to_term(Reply)
-    after 100 ->
-	    {error, client_timeout}
-    end.

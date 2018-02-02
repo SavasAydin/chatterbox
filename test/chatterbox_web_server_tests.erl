@@ -2,7 +2,7 @@
 -include_lib("eunit/include/eunit.hrl").
 
 -define(CONFIG, [{ip, {0,0,0,0}},
-                 {port, 8080},
+                 {port, 8089},
                  {docroot, "priv/www/"}]).
 
 start_chatterbox_web_server_test_() ->
