@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+    <head>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+	<title>Login page</title>
+	<style>
+
+	 body{
+	     font-size: 17px;
+	     font-family: arial;
+	     background: #f4f4f4;
+	     line-height: 1.5em;
+	 }
+
+	 button{
+	     background-color: #4CAF50;
+	     font-size: 12px;
+	     color: white;
+	     padding: 14px 20px;
+	     margin: 8px 0;
+	     border: none;
+	     cursor: pointer;
+	     width: 100%;
+	 }
+
+	 input[type=text]{
+	     width: 100%;
+	     padding: 12px 20px;
+	     margin: 8px 0;
+	     display: inline-block;
+	     border: 1px solid #ccc;
+	     box-sizing: border-box;
+	 }
+
+	 #init{
+	     padding: 14px;
+	     width: 50%;
+	     margin: 0px auto;
+	     text-align: center;
+	 }
+
+	</style>
+    </head>
+    <body>
+	<h1>You are logged in </h1>
+	<div id="init">
+	    <label id="dcrl">Do you want to create a chatterbox room?</label><br>
+	    <button id="dcrb" onclick="displayCreateAccount()">Create Room</button><br>
+	    <label id="djrl">Do you want to join a room?</label><br>
+	    <button onclick="displayLogin()">Join Room</button><br>
+	</div>
+    </body>
+    <script>
+    </script>
+</html>
