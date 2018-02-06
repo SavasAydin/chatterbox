@@ -1,6 +1,6 @@
 -module(account).
 
--export([create_table/0,
+-export([create_tables/0,
          start_account_process/1,
          stop_account_process/1,
          list_room_users/1,
@@ -10,17 +10,23 @@
 
 -include("chatterbox.hrl").
 
-create_table() ->
-    chatterbox_lib:create_table_if_not_exist(accounts).
+create_tables() ->
+    chatterbox_lib:create_table_if_not_exist(accounts),
+    chatterbox_lib:create_table_if_not_exist(logins).
 
 start_account_process(Username) ->
     spawn(fun() ->
-                  register(?TO_ATOM(Username), self()),
+                  Name = ?TO_ATOM(Username),
+                  register(Name, self()),
+                  LoginTime = calendar:local_time(),
+                  ets:insert(logins, {Name, LoginTime}),
                   account_loop()
           end).
 
 stop_account_process(Username) ->
-    ?TO_ATOM(Username) ! stop.
+    Name = ?TO_ATOM(Username),
+    Name ! stop,
+    ets:delete(logins, Name).
 
 list_room_users([Username, Roomname]) ->
     ?TO_ATOM(Username) ! {user_list_request, Roomname},

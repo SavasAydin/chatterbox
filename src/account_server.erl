@@ -59,16 +59,16 @@ handle_call({delete, {"name", Username}}, _, State) ->
     {reply, "account is deleted", State};
 
 handle_call({login, [{"name", Username}, {"password", Password}]}, _, State) ->
-    Reply = login_if_authorized(Username, Password),
+    Reply = handle_login(Username, Password),
     {reply, Reply, State};
 
 handle_call({is_logged_in, {"name", Username}}, _, State) ->
-    Reply = whereis(?TO_ATOM(Username)) /= undefined,
+    Reply = logged_in(Username),
     {reply, Reply, State};
 
 handle_call({logout, {"name", Username}}, _, State) ->
-    account:stop_account_process(Username),
-    {reply, "logged out", State};
+    Reply = handle_logout(Username),
+    {reply, Reply, State};
 
 handle_call(_Request, _From, State) ->
     Reply = ok,
@@ -102,6 +102,17 @@ create_if_not_exist(Username, Password) ->
             "username is taken"
     end.
 
+handle_login(Username, Password) ->
+    case logged_in(Username) of
+        false ->
+            login_if_authorized(Username, Password);
+        true ->
+            "already logged in"
+    end.
+
+logged_in(Username) ->
+    whereis(?TO_ATOM(Username)) /= undefined.
+
 login_if_authorized(Username, Password) ->
     case ets:lookup(accounts, Username) of
         [{Username, Password}] ->
@@ -112,4 +123,14 @@ login_if_authorized(Username, Password) ->
             "username or password is wrong";
         [] ->
             "account must be created first"
+    end.
+
+handle_logout(Username) ->
+    case logged_in(Username) of
+        true ->
+            account:stop_account_process(Username),
+            chatterbox_debugger:decrement_logged_accounts(),
+            "logged out";
+        false ->
+            "not logged in"
     end.

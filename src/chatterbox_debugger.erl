@@ -4,9 +4,11 @@
          initialize/0,
          increment_created_accounts/0,
          increment_logged_accounts/0,
+         decrement_logged_accounts/0,
          increment_created_rooms/0,
          increment_failed_account_creation_attempts/0,
-         increment_failed_room_creation_attempts/0
+         increment_failed_room_creation_attempts/0,
+         collect_logs/0
         ]).
 
 create_table() ->
@@ -37,6 +39,10 @@ increment_logged_accounts() ->
     Key = number_of_logged_in_accounts,
     ets:update_counter(?MODULE, Key, {2, 1}).
 
+decrement_logged_accounts() ->
+    Key = number_of_logged_in_accounts,
+    ets:update_counter(?MODULE, Key, {2, -1}).
+
 increment_failed_account_creation_attempts() ->
     Key = number_of_failed_account_creation_attempts,
     ets:update_counter(?MODULE, Key, {2, 1}).
@@ -44,3 +50,23 @@ increment_failed_account_creation_attempts() ->
 increment_failed_room_creation_attempts() ->
     Key = number_of_failed_room_creation_attempts,
     ets:update_counter(?MODULE, Key, {2, 1}).
+
+collect_logs() ->
+    Logins = collect_login_data(),
+    Counters = collect_debug_counters(),
+    io:format("### Logged in users ###~n~s~n"
+              "### Counters ###~n~s~n",
+              [lists:flatten(Logins),
+               lists:flatten(Counters)]).
+
+collect_login_data() ->
+    LoginText = "~p logged in since ~p~n",
+    collect(logins, LoginText).
+
+collect_debug_counters() ->
+    CounterText = "~p are ~p~n",
+    collect(chatterbox_debugger, CounterText).
+
+collect(Table, Text) ->
+    Entries = ets:tab2list(Table),
+    [io_lib:format(Text, [Key, Value]) || {Key, Value} <- Entries].

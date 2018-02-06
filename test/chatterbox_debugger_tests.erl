@@ -20,18 +20,19 @@ delete_debug_table_test_() ->
      end}.
 
 update_debug_table_test_() ->
-    {setup,
+    {foreach,
      fun() -> chatterbox_debugger:create_table() end,
      fun(_)-> chatterbox_debugger:delete_table() end,
-     [fun initialize/0,
+     [fun initialized_when_created/0,
       fun increment_created_accounts/0,
       fun increment_logged_accounts/0,
+      fun decrement_logged_accounts/0,
       fun increment_created_rooms/0,
       fun increment_failed_account_creation_attempts/0,
       fun increment_failed_room_creation_attempts/0
      ]}.
 
-initialize() ->
+initialized_when_created() ->
     Res = lists:sort(ets:tab2list(chatterbox_debugger)),
     ?assertEqual([{number_of_created_accounts, 0},
                   {number_of_created_rooms, 0},
@@ -55,6 +56,11 @@ increment_logged_accounts() ->
     1 = chatterbox_debugger:increment_logged_accounts(),
     Res = chatterbox_debugger:increment_logged_accounts(),
     ?assertEqual(2, Res).
+
+decrement_logged_accounts() ->
+    1 = chatterbox_debugger:increment_logged_accounts(),
+    Res = chatterbox_debugger:decrement_logged_accounts(),
+    ?assertEqual(0, Res).
 
 increment_failed_account_creation_attempts() ->
     Res = chatterbox_debugger:increment_failed_account_creation_attempts(),

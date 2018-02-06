@@ -47,7 +47,7 @@ loop(Req, DocRoot) ->
 
 ensure_tables() ->
     chatterbox_debugger:create_table(),
-    account:create_table(),
+    account:create_tables(),
     room:create_table().
 
 get_option(Option, Options) ->
