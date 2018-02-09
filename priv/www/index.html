@@ -1,236 +1,256 @@
 <!doctype html>
 <html>
     <head>
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 
-	<title>Chatterbox Demo</title>
-	<style>
+        <title>Chatterbox Demo</title>
+        <style>
 
-	 body{
-	     font-size: 17px;
-	     font-family: arial;
-	     background: #f4f4f4;
-	     line-height: 1.5em;
-	 }
+         body{
+             font-size: 17px;
+             font-family: arial;
+             background: #f4f4f4;
+             line-height: 1.5em;
+         }
 
-	 button{
-	     background-color: #4CAF50;
-	     font-size: 12px;
-	     color: white;
-	     padding: 14px 20px;
-	     margin: 8px 0;
-	     border: none;
-	     cursor: pointer;
-	     width: 100%;
-	 }
+         button{
+             background-color: #4CAF50;
+             font-size: 12px;
+             color: white;
+             padding: 14px 20px;
+             margin: 8px 0;
+             border: none;
+             cursor: pointer;
+             width: 100%;
+         }
 
-	 input[type=text]{
-	     width: 100%;
-	     padding: 12px 20px;
-	     margin: 8px 0;
-	     display: inline-block;
-	     border: 1px solid #ccc;
-	     box-sizing: border-box;
-	 }
+         input[type=text]{
+             width: 100%;
+             padding: 12px 20px;
+             margin: 8px 0;
+             display: inline-block;
+             border: 1px solid #ccc;
+             box-sizing: border-box;
+         }
 
-	 #init{
-	     padding: 14px;
-	     width: 50%;
-	     margin: 0px auto;
-	     text-align: center;
-	 }
+         #init{
+             padding: 14px;
+             width: 50%;
+             margin: 0px auto;
+             text-align: center;
+         }
 
-	 .modal {
-	     display: none; /* Hidden by default */
-	     position: fixed; /* Stay in place */
-	     z-index: 1; /* Sit on top */
-	     padding-top: 100px; /* Location of the box */
-	     left: 0;
-	     top: 0;
-	     width: 100%; /* Full width */
-	     height: 100%; /* Full height */
-	     overflow: auto; /* Enable scroll if needed */
-	     background-color: rgb(0,0,0); /* Fallback color */
-	     background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
-	     padding-top: 60px;
-	 }
 
-	 .modal_content{
-	     background-color: #fefefe;
-	     margin: 5% auto 15% auto; /* 5% from top, 15% from bottom and centered */
-	     border: 1px solid #888;
-	     width: 80%;
-	     padding: 16px;
-	 }
+         #logged_in{
+             padding: 14px;
+             width: 50%;
+             margin: 0px auto;
+             text-align: center;
+             display: none
+         }
 
-	 .modal-header {
-	     padding: 10px 16px;
-	     background-color: #5cb85c;
-	     text-align: center;
-	     color: white;
-	 }
 
-	 .modal-body {
-	     padding: 10px 16px;}
+         .modal {
+             display: none; /* Hidden by default */
+             position: fixed; /* Stay in place */
+             z-index: 1; /* Sit on top */
+             padding-top: 100px; /* Location of the box */
+             left: 0;
+             top: 0;
+             width: 100%; /* Full width */
+             height: 100%; /* Full height */
+             overflow: auto; /* Enable scroll if needed */
+             background-color: rgb(0,0,0); /* Fallback color */
+             background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+             padding-top: 60px;
+         }
 
-	 .modal-footer {
-	     padding: 2px 16px;
-	     text-align: center;
-	     color: red;
-	 }
+         .modal_content{
+             background-color: #fefefe;
+             margin: 5% auto 15% auto; /* 5% from top, 15% from bottom and centered */
+             border: 1px solid #888;
+             width: 80%;
+             padding: 16px;
+         }
 
-	 .close {
-	     color: white;
-	     float: right;
-	     font-size: 28px;
-	     font-weight: bold;
-	 }
+         .modal-header {
+             padding: 10px 16px;
+             background-color: #5cb85c;
+             text-align: center;
+             color: white;
+         }
 
-	 .close:hover,
-	 .close:focus {
-	     color: #000;
-	     text-decoration: none;
-	     cursor: pointer;
-	 }
+         .modal-body {
+             padding: 10px 16px;}
 
-	</style>
+         .modal-footer {
+             padding: 2px 16px;
+             text-align: center;
+             color: red;
+         }
+
+         .close {
+             color: white;
+             float: right;
+             font-size: 28px;
+             font-weight: bold;
+         }
+
+         .close:hover,
+         .close:focus {
+             color: #000;
+             text-decoration: none;
+             cursor: pointer;
+         }
+
+        </style>
     </head>
     <body>
-	<h1>Welcome to Chatterbox </h1>
+        <h1>Welcome to Chatterbox </h1>
 
-	<div id="init">
-	    <label id="displayCreateAccountL">Do you want to join chatterbox?</label><br>
-	    <button id="displayCreateAccountB" onclick="displayCreateAccount()">Create Account</button><br>
-	    <label id="displayLoginL">Already have an account?</label><br>
-	    <button onclick="displayLogin()">Login</button><br>
-	</div>
+        <div id="init">
+            <label id="displayCreateAccountL">Do you want to join chatterbox?</label><br>
+            <button id="displayCreateAccountB" onclick="displayCreateAccount()">Create Account</button><br>
+            <label id="displayLoginL">Already have an account?</label><br>
+            <button onclick="displayLogin()">Login</button><br>
+        </div>
 
-	<div id="create_account" class="modal">
-	    <div class="modal_content">
-		<div class="modal-header">
-		    <span class="close">&times;</span>
-		    <label>Chatterbox - Create Your Account Now</label><br>
-		</div>
-		<div id="create_account" class="modal-body">
-		    <label><b>Username</b></label><br>
-		    <input id="c_name" type="text" placeholder="Enter Username"><br>
-		    <label><b>Password</b></label><br>
-		    <input id="c_password" type="text" placeholder="Enter Password"><br>
-		    <button id="create_account_btn" type="button">Create Account</button>
-		</div>
-		<div class="modal-footer">
-		    <label id="create_response"><b></b></label>
-		</div>
-	    </div>
-	</div>
-
-	<div id="login" class="modal">
-	    <div class="modal_content">
-		<div class="modal-header">
-		    <span class="close">&times;</span>
-		    <label>Chatterbox - Login Now</label><br>
-		</div>
-		<div id="login" class="modal-body">
-		    <label>Username</label>
-		    <input id="l_name" type="text" placeholder="Enter Username">
-		    <label>Password</label>
-		    <input id="l_password" type="text"  placeholder="Enter Password"><br>
-		    <button id="login_btn" type="button">Login</button>
-		</div>
-		<div class="modal-footer">
-		    <label id="login_response"><b></b></label>
-		</div>
-	    </div>
-	</div>
-	<hr/>
-
-	<script >
-
-	 var modals = document.getElementsByClassName('modal');
-
-	 function closeModalWhenClickedOutOfModal(){
-	     window.onclick = function(event){
-		 for (var i = 0; i < modals.length; i++) {
-		     if(event.target == modals[i]){
-			 modals[i].style.display = 'none';
-		     }
-		 }
-	     }
-	 }
-
-	 function closeModalWhenClickedX(){
-	     var x = document.getElementsByClassName("close");
-
-	     x[0].onclick = function() {
-		 modals[0].style.display = 'none';
-	     }
-
-	     x[1].onclick = function() {
-		 modals[1].style.display = 'none';
-	     }
-	 }
-
-	 function displayCreateAccount(){
-	     document.getElementById('create_account').style.display = 'block';
-	 }
-
-	 function displayLogin(){
-	     document.getElementById('login').style.display = 'block';
-	 }
-
-	 function create_account(){
-	     var name = document.getElementById("c_name").value;
-	     var password = document.getElementById("c_password").value;
-	     console.log("creating.. username " + name + " password " + password);
-	     var formdata = {'name': name, 'password': password};
-	     $.post("account_server create", formdata, function(data){
-		 var response = data[0].response;
-		 console.log("response is " + response);
-		 if (response.includes("created") == true){
-		     var dcl = document.getElementById('displayCreateAccountL');
-		     dcl.innerHTML = "Your account has been created";
-		     var dcb = document.getElementById('displayCreateAccountB');
-		     dcb.style.display = 'none';
-		     var dll = document.getElementById('displayLoginL');
-		     dll.innerHTML = "Login now!";
-		     modals[0].style.display = 'none';
-		 } else {
-		     document.getElementById("create_response").innerHTML = response;
-		 }
-	     }, "json");
-	 }
-
-	 function login(){
-	     var name = document.getElementById("l_name").value;
-	     var password = document.getElementById("l_password").value;
-	     console.log("logining.. username " + name + " password " + password);
-	     var formdata = {'name': name, 'password': password};
-	     $.post("account_server login", formdata, function(data){
-		 var response = data[0].response;
-		 console.log("response is " + response);
-		 if(response == "logged in"){
-		     var displayL = document.getElementById('displayLoginL');
-		     window.location = "login.html";
-
-		 } else {
-		     document.getElementById("login_response").innerHTML = response;
-		 }
-	     }, "json");
-	 }
-
-	 $(document).ready(function(){
-
-	     closeModalWhenClickedOutOfModal()
-
-	     closeModalWhenClickedX()
-
-	     $('#create_account_btn').click(create_account)
-
-	     $('#login_btn').click(login)
-
-	 })
+        <div id="logged_in">
+            <label id="dcrl">Do you want to create a chatterbox room?</label><br>
+            <button id="dcrb" onclick="displayCreateAccount()">Create Room</button><br>
+            <label id="djrl">Do you want to join a room?</label><br>
+            <button onclick="displayLogin()">Join Room</button><br>
+        </div>
 
 
-	</script>
+        <div id="create_account" class="modal">
+            <div class="modal_content">
+                <div class="modal-header">
+                    <span class="close">&times;</span>
+                    <label>Chatterbox - Create Your Account Now</label><br>
+                </div>
+                <div id="create_account" class="modal-body">
+                    <label><b>Username</b></label><br>
+                    <input id="c_name" type="text" placeholder="Enter Username"><br>
+                    <label><b>Password</b></label><br>
+                    <input id="c_password" type="text" placeholder="Enter Password"><br>
+                    <button id="create_account_btn" type="button">Create Account</button>
+                </div>
+                <div class="modal-footer">
+                    <label id="create_response"><b></b></label>
+                </div>
+            </div>
+        </div>
+
+        <div id="login" class="modal">
+            <div class="modal_content">
+                <div class="modal-header">
+                    <span class="close">&times;</span>
+                    <label>Chatterbox - Login Now</label><br>
+                </div>
+                <div id="login" class="modal-body">
+                    <label>Username</label>
+                    <input id="l_name" type="text" placeholder="Enter Username">
+                    <label>Password</label>
+                    <input id="l_password" type="text"  placeholder="Enter Password"><br>
+                    <button id="login_btn" type="button">Login</button>
+                </div>
+                <div class="modal-footer">
+                    <label id="login_response"><b></b></label>
+                </div>
+            </div>
+        </div>
+        <hr/>
+
+        <script >
+
+         var modals = document.getElementsByClassName('modal');
+
+         function closeModalWhenClickedOutOfModal(){
+             window.onclick = function(event){
+                 for (var i = 0; i < modals.length; i++) {
+                     if(event.target == modals[i]){
+                         modals[i].style.display = 'none';
+                     }
+                 }
+             }
+         }
+
+         function closeModalWhenClickedX(){
+             var x = document.getElementsByClassName("close");
+
+             x[0].onclick = function() {
+                 modals[0].style.display = 'none';
+             }
+
+             x[1].onclick = function() {
+                 modals[1].style.display = 'none';
+             }
+         }
+
+         function displayCreateAccount(){
+             document.getElementById('create_account').style.display = 'block';
+         }
+
+         function displayLogin(){
+             document.getElementById('login').style.display = 'block';
+         }
+
+         function create_account(){
+             var name = document.getElementById("c_name").value;
+             var password = document.getElementById("c_password").value;
+             console.log("creating.. username " + name + " password " + password);
+             var formdata = {'name': name, 'password': password};
+             $.post("account_server create", formdata, function(data){
+                 var response = data[0].response;
+                 console.log("response is " + response);
+                 if (response.includes("created") == true){
+                     var dcl = document.getElementById('displayCreateAccountL');
+                     dcl.innerHTML = "Your account has been created";
+                     var dcb = document.getElementById('displayCreateAccountB');
+                     dcb.style.display = 'none';
+                     var dll = document.getElementById('displayLoginL');
+                     dll.innerHTML = "Login now!";
+                     modals[0].style.display = 'none';
+                 } else {
+                     document.getElementById("create_response").innerHTML = response;
+                 }
+             }, "json");
+         }
+
+         function login(){
+             var name = document.getElementById("l_name").value;
+             var password = document.getElementById("l_password").value;
+             console.log("logining.. username " + name + " password " + password);
+             var formdata = {'name': name, 'password': password};
+             $.post("account_server login", formdata, function(data){
+                 var response = data[0].response;
+                 console.log("response is " + response);
+                 if(response == "logged in"){
+                     modals[1].style.display = 'none';
+                     var logged_in = document.getElementById('logged_in');
+                     logged_in.style.display = 'block';
+                     var init = document.getElementById('init');
+                     init_in.style.display = 'none';
+                 } else {
+                     document.getElementById("login_response").innerHTML = response;
+                 }
+             }, "json");
+         }
+
+         $(document).ready(function(){
+
+             closeModalWhenClickedOutOfModal()
+
+             closeModalWhenClickedX()
+
+             $('#create_account_btn').click(create_account)
+
+             $('#login_btn').click(login)
+
+         })
+
+
+        </script>
     </body>
 </html>
