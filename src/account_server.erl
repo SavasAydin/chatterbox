@@ -66,7 +66,7 @@ handle_call({is_logged_in, {"name", Username}}, _, State) ->
     Reply = logged_in(Username),
     {reply, Reply, State};
 
-handle_call({logout, {"name", Username}}, _, State) ->
+handle_call({logout, [{"name", Username}]}, _, State) ->
     Reply = handle_logout(Username),
     {reply, Reply, State};
 

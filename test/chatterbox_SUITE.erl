@@ -50,7 +50,7 @@ login_and_logout_once_created(_) ->
     Actions = [{{create_account, [Username, Password]}, "account is created"},
                {{login, [Username, Password]}, "logged in"},
                {{is_logged_in, Username}, true},
-               {{logout, Username}, "logged out"},
+               {{logout, [Username]}, "logged out"},
                {{is_logged_in, Username}, false},
                {{delete_account, Username}, "account is deleted"}],
     perform_actions(Actions).
@@ -80,7 +80,7 @@ try_to_login_same_account_twice(_) ->
     Actions = [{{create_account, [Username, Password]}, "account is created"},
                {{login, [Username, Password]}, "logged in"},
                {{login, [Username, Password]}, "already logged in"},
-               {{logout, Username}, "logged out"},
+               {{logout, [Username]}, "logged out"},
                {{is_logged_in, Username}, false},
                {{delete_account, Username}, "account is deleted"}],
     perform_actions(Actions).
@@ -90,7 +90,7 @@ try_to_logout_when_logged_out(_) ->
     Username = {"name", "Adam"},
     Password = {"password", "Password"},
     Actions = [{{create_account, [Username, Password]}, "account is created"},
-               {{logout, Username}, "not logged in"},
+               {{logout, [Username]}, "not logged in"},
                {{delete_account, Username}, "account is deleted"}],
     perform_actions(Actions).
 
@@ -105,8 +105,8 @@ send_a_message(_) ->
                {{create_account, [Username2, Password2]}, "account is created"},
                {{login, [Username2, Password2]}, "logged in"},
                {{send_to_account, [Username2, {Username1, "hello"}]}, sent},
-               {{logout, Username1}, "logged out"},
-               {{logout, Username2}, "logged out"}],
+               {{logout, [Username1]}, "logged out"},
+               {{logout, [Username2]}, "logged out"}],
     perform_actions(Actions).
 
 %%--------------------------------------------------------------------

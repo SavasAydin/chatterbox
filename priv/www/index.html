@@ -116,12 +116,13 @@
         </div>
 
         <div id="logged_in">
-            <label id="dcrl">Do you want to create a chatterbox room?</label><br>
-            <button id="dcrb" onclick="displayCreateAccount()">Create Room</button><br>
-            <label id="djrl">Do you want to join a room?</label><br>
-            <button onclick="displayLogin()">Join Room</button><br>
+            <label>Do you want to create a chatterbox room?</label><br>
+            <button onclick="displayCreateRoom()">Create Room</button><br>
+            <label id="join">Do you want to join a room?</label><br>
+            <button onclick="joinRoom()">Join Room</button><br>
+	    <label id="logout">Do you want to log out?</label><br>
+            <button onclick="logout()">Logout</button><br>
         </div>
-
 
         <div id="create_account" class="modal">
             <div class="modal_content">
@@ -129,15 +130,15 @@
                     <span class="close">&times;</span>
                     <label>Chatterbox - Create Your Account Now</label><br>
                 </div>
-                <div id="create_account" class="modal-body">
+                <div class="modal-body">
                     <label><b>Username</b></label><br>
-                    <input id="c_name" type="text" placeholder="Enter Username"><br>
+                    <input id="account_name" type="text" placeholder="Enter Username"><br>
                     <label><b>Password</b></label><br>
-                    <input id="c_password" type="text" placeholder="Enter Password"><br>
-                    <button id="create_account_btn" type="button">Create Account</button>
+                    <input id="account_password" type="text" placeholder="Enter Password"><br>
+                    <button onclick="create_account()" type="button">Create Account</button>
                 </div>
                 <div class="modal-footer">
-                    <label id="create_response"><b></b></label>
+                    <label id="create_account_response"><b></b></label>
                 </div>
             </div>
         </div>
@@ -150,16 +151,36 @@
                 </div>
                 <div id="login" class="modal-body">
                     <label>Username</label>
-                    <input id="l_name" type="text" placeholder="Enter Username">
+                    <input id="login_name" type="text" placeholder="Enter Username">
                     <label>Password</label>
-                    <input id="l_password" type="text"  placeholder="Enter Password"><br>
-                    <button id="login_btn" type="button">Login</button>
+                    <input id="login_password" type="text"  placeholder="Enter Password"><br>
+                    <button onclick="login()" type="button">Login</button>
                 </div>
                 <div class="modal-footer">
                     <label id="login_response"><b></b></label>
                 </div>
             </div>
         </div>
+
+	<div id="create_room" class="modal">
+            <div class="modal_content">
+                <div class="modal-header">
+                    <span class="close">&times;</span>
+                    <label>Chatterbox - Create Your Chat Room Now</label><br>
+                </div>
+                <div class="modal-body">
+                    <label><b>Room Name</b></label><br>
+                    <input id="room_name" type="text" placeholder="Enter Room Name"><br>
+                    <label><b>Password</b></label><br>
+                    <input id="room_password" type="text" placeholder="Enter Password"><br>
+                    <button onclick="create_room()" type="button">Create Room</button>
+                </div>
+                <div class="modal-footer">
+                    <label id="create_room_response"><b></b></label>
+                </div>
+            </div>
+        </div>
+
         <hr/>
 
         <script >
@@ -186,6 +207,11 @@
              x[1].onclick = function() {
                  modals[1].style.display = 'none';
              }
+
+	     x[2].onclick = function() {
+                 modals[2].style.display = 'none';
+             }
+
          }
 
          function displayCreateAccount(){
@@ -196,14 +222,18 @@
              document.getElementById('login').style.display = 'block';
          }
 
+	 function displayCreateRoom(){
+             document.getElementById('create_room').style.display = 'block';
+         }
+
          function create_account(){
-             var name = document.getElementById("c_name").value;
-             var password = document.getElementById("c_password").value;
+             var name = document.getElementById("account_name").value;
+             var password = document.getElementById("account_password").value;
              console.log("creating.. username " + name + " password " + password);
              var formdata = {'name': name, 'password': password};
              $.post("account_server create", formdata, function(data){
                  var response = data[0].response;
-                 console.log("response is " + response);
+                 console.log("create account response is " + response);
                  if (response.includes("created") == true){
                      var dcl = document.getElementById('displayCreateAccountL');
                      dcl.innerHTML = "Your account has been created";
@@ -213,43 +243,76 @@
                      dll.innerHTML = "Login now!";
                      modals[0].style.display = 'none';
                  } else {
-                     document.getElementById("create_response").innerHTML = response;
+                     document.getElementById("create_account_response").innerHTML = response;
                  }
              }, "json");
          }
 
          function login(){
-             var name = document.getElementById("l_name").value;
-             var password = document.getElementById("l_password").value;
+             var name = document.getElementById("login_name").value;
+             var password = document.getElementById("login_password").value;
              console.log("logining.. username " + name + " password " + password);
              var formdata = {'name': name, 'password': password};
              $.post("account_server login", formdata, function(data){
                  var response = data[0].response;
-                 console.log("response is " + response);
+                 console.log("login response is " + response);
                  if(response == "logged in"){
                      modals[1].style.display = 'none';
+                     var init = document.getElementById('init');
+                     init.style.display = 'none';
                      var logged_in = document.getElementById('logged_in');
                      logged_in.style.display = 'block';
-                     var init = document.getElementById('init');
-                     init_in.style.display = 'none';
                  } else {
                      document.getElementById("login_response").innerHTML = response;
                  }
              }, "json");
          }
 
+         function create_room(){
+             var name = document.getElementById("room_name").value;
+             var password = document.getElementById("room_password").value;
+             console.log("creating.. room " + name + " password " + password);
+             var formdata = {'name': name, 'password': password};
+             $.post("room_server create", formdata, function(data){
+                 var response = data[0].response;
+                 console.log("create room response is " + response);
+                 if (response.includes("created") == true){
+                     modals[2].style.display = 'none';
+                 } else {
+                     document.getElementById("create_room_response").innerHTML = response;
+                 }
+             }, "json");
+         }
+
+	 function logout(){
+             var name = document.getElementById("login_name").value;
+             console.log("logging out.. username " + name);
+             var formdata = {'name': name};
+             $.post("account_server logout", formdata, function(data){
+                 var response = data[0].response;
+                 console.log("logout response is " + response);
+                 if(response == "logged out"){
+                     var logged_in = document.getElementById('logged_in');
+                     logged_in.style.display = 'none';
+		     var init = document.getElementById('init');
+                     init.style.display = 'block';
+		     var dcl = document.getElementById('displayCreateAccountL');
+		     dcl.innerHTML = 'Do you want to join chatterbox?';
+		     var dcb = document.getElementById('displayCreateAccountB');
+                     dcb.style.display = 'block';
+                     var dll = document.getElementById('displayLoginL');
+		     dll.innerHTML = 'Already have an account?';
+                 }
+		 else {
+		     console.log("failed to logout");
+                 }
+             }, "json");
+         }
+
          $(document).ready(function(){
-
              closeModalWhenClickedOutOfModal()
-
              closeModalWhenClickedX()
-
-             $('#create_account_btn').click(create_account)
-
-             $('#login_btn').click(login)
-
          })
-
 
         </script>
     </body>
