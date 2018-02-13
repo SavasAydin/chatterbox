@@ -46,8 +46,10 @@ logout(Username) ->
     gen_server:call(?MODULE, {logout, Username}).
 
 %%--------------------------------------------------------------------
-handle_call({create, [{"name", Username}, {"password", Password}]}, _, State) ->
-    Reply = create_if_not_exist(Username, Password),
+handle_call({create, Args}, _, State) ->
+    Tags = ["name", "password"],
+    NewArgs = chatterbox_lib:get_values(Tags, Args),
+    Reply = create_if_not_exist(NewArgs),
     {reply, Reply, State};
 
 handle_call({is_created, {"name", Username}}, _, State) ->
@@ -58,8 +60,10 @@ handle_call({delete, {"name", Username}}, _, State) ->
     true = ets:delete(accounts, Username),
     {reply, "account is deleted", State};
 
-handle_call({login, [{"name", Username}, {"password", Password}]}, _, State) ->
-    Reply = handle_login(Username, Password),
+handle_call({login, Args}, _, State) ->
+    Tags = ["name", "password"],
+    NewArgs = chatterbox_lib:get_values(Tags, Args),
+    Reply = handle_login(NewArgs),
     {reply, Reply, State};
 
 handle_call({is_logged_in, {"name", Username}}, _, State) ->
@@ -91,7 +95,7 @@ code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
 %%%===================================================================
-create_if_not_exist(Username, Password) ->
+create_if_not_exist([Username, Password]) ->
     case ets:lookup(accounts, Username) of
         [] ->
             true = ets:insert(accounts, {Username, Password}),
@@ -102,16 +106,13 @@ create_if_not_exist(Username, Password) ->
             "username is taken"
     end.
 
-handle_login(Username, Password) ->
+handle_login([Username, Password]) ->
     case logged_in(Username) of
         false ->
             login_if_authorized(Username, Password);
         true ->
             "already logged in"
     end.
-
-logged_in(Username) ->
-    whereis(?TO_ATOM(Username)) /= undefined.
 
 login_if_authorized(Username, Password) ->
     case ets:lookup(accounts, Username) of
@@ -134,3 +135,6 @@ handle_logout(Username) ->
         false ->
             "not logged in"
     end.
+
+logged_in(Username) ->
+    whereis(?TO_ATOM(Username)) /= undefined.

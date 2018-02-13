@@ -26,23 +26,27 @@ init([]) ->
 create(Args) ->
     gen_server:call(?MODULE, {create, Args}).
 
-is_created([_, Roomname]) ->
-    gen_server:call(?MODULE, {is_created, Roomname}).
+is_created(Room) ->
+    gen_server:call(?MODULE, {is_created, Room}).
 
 delete(Args) ->
     gen_server:call(?MODULE, {delete, Args}).
 
 %%--------------------------------------------------------------------
-handle_call({create, [Username, Roomname]}, _, State) ->
-    Reply = create_if_not_exist(Username, Roomname),
+handle_call({create, Args}, _, State) ->
+    Tags = ["name", "room name"],
+    NewArgs = chatterbox_lib:get_values(Tags, Args),
+    Reply = create_if_not_exist(NewArgs),
     {reply, Reply, State};
 
-handle_call({is_created, Roomname}, _, State) ->
+handle_call({is_created, {"room name", Roomname}}, _, State) ->
     Reply = ets:lookup(rooms, Roomname) /= [],
     {reply, Reply, State};
 
-handle_call({delete, [Username, Roomname]}, _, State) ->
-    Reply = delete_if_owner(Username, Roomname),
+handle_call({delete, Args}, _, State) ->
+    Tags = ["name", "room name"],
+    NewArgs = chatterbox_lib:get_values(Tags, Args),
+    Reply = handle_deleting_room(NewArgs),
     {reply, Reply, State};
 
 handle_call(_Request, _From, State) ->
@@ -66,12 +70,12 @@ code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
 %%%===================================================================
-create_if_not_exist(Username, Roomname) ->
+create_if_not_exist([Name, Roomname]) ->
     case ets:lookup(rooms, Roomname) of
         [] ->
-            Room = #room{name = Roomname, owner = Username},
+            Room = #room{name = Roomname, owner = Name},
             true = ets:insert(rooms, Room),
-            room:start_room_process(Username, Roomname),
+            room:start_room_process(Name, Roomname),
             chatterbox_debugger:increment_created_rooms(),
             "room is created";
         _ ->
@@ -79,10 +83,18 @@ create_if_not_exist(Username, Roomname) ->
             "roomname is taken"
     end.
 
-delete_if_owner(Username, Roomname) ->
-    [Room] = ets:lookup(rooms, Roomname),
+handle_deleting_room([Name, Roomname]) ->
+    case ets:lookup(rooms, Roomname) of
+        [Room] ->
+            delete_if_owner(Name, Room);
+        [] ->
+            "room must be created first"
+    end.
+
+delete_if_owner(Name, Room) ->
     case Room#room.owner of
-        Username ->
+        Name ->
+            Roomname = Room#room.name,
             room:stop_room_process(Roomname),
             true = ets:delete(rooms, Roomname),
             "room is deleted";

@@ -15,6 +15,9 @@
          try_to_login_with_wrong_password/1,
          try_to_login_same_account_twice/1,
          try_to_logout_when_logged_out/1,
+         create_and_delete_room/1,
+         try_to_create_same_room_twice/1,
+         try_to_delete_room_when_not_created/1,
          send_a_message/1
         ]).
 
@@ -39,8 +42,8 @@ try_to_create_same_account_twice(_) ->
     Username = {"name", "Adam"},
     Password = {"password", "Password"},
     Actions = [{{create_account, [Username, Password]}, "account is created"},
-               {{create_account, [Username, Password]}, "username is taken"},
-               {{delete_account, Username}, "account is deleted"}],
+               {{create_account, [Username, Password]}, "username is taken"}
+              ],
     perform_actions(Actions).
 
 %%--------------------------------------------------------------------
@@ -79,10 +82,8 @@ try_to_login_same_account_twice(_) ->
     Password = {"password", "Password"},
     Actions = [{{create_account, [Username, Password]}, "account is created"},
                {{login, [Username, Password]}, "logged in"},
-               {{login, [Username, Password]}, "already logged in"},
-               {{logout, [Username]}, "logged out"},
-               {{is_logged_in, Username}, false},
-               {{delete_account, Username}, "account is deleted"}],
+               {{login, [Username, Password]}, "already logged in"}
+              ],
     perform_actions(Actions).
 
 %%--------------------------------------------------------------------
@@ -90,10 +91,46 @@ try_to_logout_when_logged_out(_) ->
     Username = {"name", "Adam"},
     Password = {"password", "Password"},
     Actions = [{{create_account, [Username, Password]}, "account is created"},
-               {{logout, [Username]}, "not logged in"},
-               {{delete_account, Username}, "account is deleted"}],
+               {{logout, [Username]}, "not logged in"}
+              ],
     perform_actions(Actions).
 
+%%--------------------------------------------------------------------
+create_and_delete_room(_) ->
+    Username = {"name", "Adam"},
+    Roomname = {"room name", "Brewster"},
+    Password = {"password", "Password"},
+    Actions = [{{create_account, [Username, Password]}, "account is created"},
+               {{login, [Username, Password]}, "logged in"},
+               {{create_room, [Username, Roomname]}, "room is created"},
+               {{is_room_created, Roomname}, true},
+               {{delete_room, [Username, Roomname]}, "room is deleted"},
+               {{is_room_created, Roomname}, false}
+              ],
+    perform_actions(Actions).
+
+%%--------------------------------------------------------------------
+try_to_create_same_room_twice(_) ->
+    Username = {"name", "Carol"},
+    Roomname = {"room name", "Koko"},
+    Password = {"password", "Password"},
+    Actions = [{{create_account, [Username, Password]}, "account is created"},
+               {{login, [Username, Password]}, "logged in"},
+               {{create_room, [Username, Roomname]}, "room is created"},
+               {{create_room, [Username, Roomname]}, "roomname is taken"}
+              ],
+    perform_actions(Actions).
+
+%%--------------------------------------------------------------------
+try_to_delete_room_when_not_created(_) ->
+    Username = {"name", "Carol"},
+    Roomname = {"room name", "Koko"},
+    Password = {"password", "Password"},
+    Actions = [{{create_account, [Username, Password]}, "account is created"},
+               {{login, [Username, Password]}, "logged in"},
+               {{delete_room, [Username, Roomname]}, "room must be created first"}
+              ],
+    perform_actions(Actions).
 %%--------------------------------------------------------------------
 send_a_message(_) ->
     Username1 = {"name", "Adam"},
@@ -151,5 +188,8 @@ all() ->
      try_to_login_with_wrong_password,
      try_to_login_same_account_twice,
      try_to_logout_when_logged_out,
+     create_and_delete_room,
+     try_to_create_same_account_twice,
+     try_to_delete_room_when_not_created,
      send_a_message
     ].
