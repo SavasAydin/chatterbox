@@ -27,14 +27,14 @@ init([]) ->
     process_flag(trap_exit, true),
     {ok, #state{}}.
 
-create(User) ->
-    gen_server:call(?MODULE, {create, User}).
+create(Args) ->
+    gen_server:call(?MODULE, {create, Args}).
 
 is_created(Username) ->
     gen_server:call(?MODULE, {is_created, Username}).
 
-delete(Username) ->
-    gen_server:call(?MODULE, {delete, Username}).
+delete(Args) ->
+    gen_server:call(?MODULE, {delete, Args}).
 
 login(Args) ->
     gen_server:call(?MODULE, {login, Args}).
@@ -42,8 +42,8 @@ login(Args) ->
 is_logged_in(Username) ->
     gen_server:call(?MODULE, {is_logged_in, Username}).
 
-logout(Username) ->
-    gen_server:call(?MODULE, {logout, Username}).
+logout(Args) ->
+    gen_server:call(?MODULE, {logout, Args}).
 
 %%--------------------------------------------------------------------
 handle_call({create, Args}, _, State) ->
@@ -56,9 +56,11 @@ handle_call({is_created, {"name", Username}}, _, State) ->
     Reply = ets:lookup(accounts, Username) /= [],
     {reply, Reply, State};
 
-handle_call({delete, {"name", Username}}, _, State) ->
-    true = ets:delete(accounts, Username),
-    {reply, "account is deleted", State};
+handle_call({delete, Args}, _, State) ->
+    Tags = ["name", "password"],
+    NewArgs = chatterbox_lib:get_values(Tags, Args),
+    Reply = delete_if_exists(NewArgs),
+    {reply, Reply, State};
 
 handle_call({login, Args}, _, State) ->
     Tags = ["name", "password"],
@@ -104,6 +106,18 @@ create_if_not_exist([Username, Password]) ->
         _ ->
             chatterbox_debugger:increment_failed_account_creation_attempts(),
             "username is taken"
+    end.
+
+delete_if_exists([Username, Password]) ->
+    case ets:lookup(accounts, Username) of
+        [{Username, Password}] ->
+            handle_logout(Username),
+            true = ets:delete(accounts, Username),
+            "account is deleted";
+        [_] ->
+            "username or password is wrong";
+        [] ->
+            "account was not created"
     end.
 
 handle_login([Username, Password]) ->

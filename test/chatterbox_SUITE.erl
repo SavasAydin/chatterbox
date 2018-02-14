@@ -10,7 +10,10 @@
 
 -export([create_and_delete_account/1,
          try_to_create_same_account_twice/1,
+         try_to_delete_account_when_not_created/1,
+         try_to_delete_account_with_wrong_password/1,
          login_and_logout_once_created/1,
+         delete_account_after_logged_in/1,
          try_to_login_when_not_created/1,
          try_to_login_with_wrong_password/1,
          try_to_login_same_account_twice/1,
@@ -32,7 +35,7 @@ create_and_delete_account(_) ->
     Password = {"password", "Password"},
     Actions = [{{create_account, [Username, Password]}, "account is created"},
                {{is_account_created, Username}, true},
-               {{delete_account, Username}, "account is deleted"},
+               {{delete_account, [Username, Password]}, "account is deleted"},
                {{is_account_created, Username}, false}
               ],
     perform_actions(Actions).
@@ -47,6 +50,25 @@ try_to_create_same_account_twice(_) ->
     perform_actions(Actions).
 
 %%--------------------------------------------------------------------
+try_to_delete_account_when_not_created(_) ->
+    Username = {"name", "Adam"},
+    Password = {"password", "Password"},
+    Actions = [{{delete_account, [Username, Password]}, "account was not created"}
+              ],
+    perform_actions(Actions).
+
+%%--------------------------------------------------------------------
+try_to_delete_account_with_wrong_password(_) ->
+    Username = {"name", "Adam"},
+    Password = {"password", "Password"},
+    WrongPasssword = {"password", "Wrong"},
+    Actions = [{{create_account, [Username, Password]}, "account is created"},
+               {{delete_account, [Username, WrongPasssword]}, "username or password is wrong"},
+               {{delete_account, [Username, Password]}, "account is deleted"}
+              ],
+    perform_actions(Actions).
+
+%%--------------------------------------------------------------------
 login_and_logout_once_created(_) ->
     Username = {"name", "Adam"},
     Password = {"password", "Password"},
@@ -55,7 +77,20 @@ login_and_logout_once_created(_) ->
                {{is_logged_in, Username}, true},
                {{logout, [Username]}, "logged out"},
                {{is_logged_in, Username}, false},
-               {{delete_account, Username}, "account is deleted"}],
+               {{delete_account, [Username, Password]}, "account is deleted"}
+              ],
+    perform_actions(Actions).
+
+%%--------------------------------------------------------------------
+delete_account_after_logged_in(_) ->
+    Username = {"name", "Adam"},
+    Password = {"password", "Password"},
+    Actions = [{{create_account, [Username, Password]}, "account is created"},
+               {{login, [Username, Password]}, "logged in"},
+               {{is_logged_in, Username}, true},
+               {{delete_account, [Username, Password]}, "account is deleted"},
+               {{is_logged_in, Username}, false}
+              ],
     perform_actions(Actions).
 
 %%--------------------------------------------------------------------
@@ -183,7 +218,10 @@ end_per_testcase(_TestCase, Config) ->
 all() ->
     [create_and_delete_account,
      try_to_create_same_account_twice,
+     try_to_delete_account_when_not_created,
+     try_to_delete_account_with_wrong_password,
      login_and_logout_once_created,
+     delete_account_after_logged_in,
      try_to_login_when_not_created,
      try_to_login_with_wrong_password,
      try_to_login_same_account_twice,
