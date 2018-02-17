@@ -2,38 +2,25 @@
 
 -behaviour(supervisor).
 
--export([start_link/1]).
+-export([start_link/2]).
 -export([init/1]).
 
 -define(SERVER, ?MODULE).
 
-start_link(Port) ->
-    supervisor:start_link({local, ?SERVER}, ?MODULE, Port).
+start_link(Port, Protocol) ->
+    supervisor:start_link({local, ?SERVER}, ?MODULE, [Port, Protocol]).
 
-init(Port) ->
-    Web = web_specs(chatterbox_web_server, Port),
+init(Args) ->
     Strategy = {one_for_one, 10, 10},
     {ok,
-     {Strategy, 
-      [Web,
+     {Strategy,
+      [{chatterbox,
+	{chatterbox_web_server, start, [Args]},
+	permanent, 5000, worker, [chatterbox_web_server]},
        {account,
-        {account_server, start_link, []},
-        permanent, 1000, worker, [account_server]},
+	{account_server, start_link, []},
+	permanent, 1000, worker, [account_server]},
        {room,
-        {room_server, start_link, []},
-        permanent, 1000, worker, [room_server]}
+	{room_server, start_link, []},
+	permanent, 1000, worker, [room_server]}
        ]}}.
-
-web_specs(Mod, Port) ->
-    WebConfig = [{ip, {0,0,0,0}},
-                 {port, Port},
-                 {docroot, local_path(["priv", "www"])}],
-    {Mod,
-     {Mod, start, [WebConfig]},
-     permanent, 5000, worker, dynamic}.
-
-local_path(Components) ->
-    {file, Loaded} = code:is_loaded(?MODULE),
-    ModPath = filename:dirname(filename:dirname(Loaded)),
-    filename:join([ModPath | Components]).
-    

@@ -1,8 +1,3 @@
-%%%-------------------------------------------------------------------
-%% @doc chatterbox public API
-%% @end
-%%%-------------------------------------------------------------------
-
 -module(chatterbox_app).
 
 -behaviour(application).
@@ -10,16 +5,14 @@
 %% Application callbacks
 -export([start/2, stop/1]).
 
-%%====================================================================
-%% API
-%%====================================================================
-
-start(_StartType, _StartArgs) ->
+%%--------------------------------------------------------------------
+start(_, _) ->
     Port = get_port(),
-    chatterbox_web_sup:start_link(Port).
+    Protocol = get_protocol(),
+    chatterbox_web_sup:start_link(Port, Protocol).
 
 %%--------------------------------------------------------------------
-stop(_State) ->
+stop(_) ->
     ok.
 
 %%====================================================================
@@ -31,4 +24,12 @@ get_port() ->
 	    8080;
 	{ok, Port} ->
 	    Port
+    end.
+
+get_protocol() ->
+    case application:get_env(chatterbox, protocol) of
+	undefined ->
+	    websocket;
+	{ok, Protocol} ->
+	    Protocol
     end.
