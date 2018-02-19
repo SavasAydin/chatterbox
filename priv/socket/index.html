@@ -263,35 +263,31 @@
 	     console.log("creating.. username " + name + " password " + password);
 	     var formdata = JSON.stringify({'name': name, 'password': password});
 	     ws.send("account_server create " + formdata);
-	     ws.onmessage = function (e) {
-		 console.log(e.data);
-	     }
-
-
-	     $.post("account_server create", formdata, function(data){
-		 var response = data[0].response;
-		 console.log("create account response is " + response);
-		 if (response.includes("created") == true){
-		     var dcl = document.getElementById('displayCreateAccountL');
-		     dcl.innerHTML = "Your account has been created";
-		     var dcb = document.getElementById('displayCreateAccountB');
-		     dcb.style.display = 'none';
-		     var dll = document.getElementById('displayLoginL');
-		     dll.innerHTML = "Login now!";
-		     modals[0].style.display = 'none';
-		 } else {
-		     document.getElementById("create_account_response").innerHTML = response;
-		 }
-	     }, "json");
-	 }
+	     ws.onmessage = function(e){
+                 var response = JSON.parse(e.data).response;
+		 console.log("response is " + response);
+                 if (response.includes("created") == true){
+                     var dcl = document.getElementById('displayCreateAccountL');
+                     dcl.innerHTML = "Your account has been created";
+                     var dcb = document.getElementById('displayCreateAccountB');
+                     dcb.style.display = 'none';
+                     var dll = document.getElementById('displayLoginL');
+                     dll.innerHTML = "Login now!";
+                     modals[0].style.display = 'none';
+                 } else {
+                     document.getElementById("create_account_response").innerHTML = response;
+                 }
+             }
+         }
 
 	 function login(){
 	     var name = document.getElementById("login_name").value;
 	     var password = document.getElementById("login_password").value;
 	     console.log("logining.. username " + name + " password " + password);
-	     var formdata = {'name': name, 'password': password};
-	     $.post("account_server login", formdata, function(data){
-		 var response = data[0].response;
+	     var formdata = JSON.stringify({'name': name, 'password': password});
+	     ws.send("account_server login " + formdata);
+             ws.onmessage = function(e){
+		 var response = JSON.parse(e.data).response;
 		 console.log("login response is " + response);
 		 if(response.includes("logged in") == true){
 		     modals[1].style.display = 'none';
@@ -302,8 +298,8 @@
 		 } else {
 		     document.getElementById("login_response").innerHTML = response;
 		 }
-	     }, "json");
-	 }
+	     }
+         }
 
 	 function createRoom(){
 	     var name = document.getElementById("room_name").value;
