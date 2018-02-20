@@ -34,17 +34,17 @@ delete(Args) ->
 
 %%--------------------------------------------------------------------
 handle_call({create, Args}, _, State) ->
-    Tags = ["name", "room name"],
+    Tags = ["name", "roomname"],
     NewArgs = chatterbox_lib:get_values(Tags, Args),
     Reply = create_if_not_exist(NewArgs),
     {reply, Reply, State};
 
-handle_call({is_created, {"room name", Roomname}}, _, State) ->
+handle_call({is_created, {"roomname", Roomname}}, _, State) ->
     Reply = ets:lookup(rooms, Roomname) /= [],
     {reply, Reply, State};
 
 handle_call({delete, Args}, _, State) ->
-    Tags = ["name", "room name"],
+    Tags = ["name", "roomname"],
     NewArgs = chatterbox_lib:get_values(Tags, Args),
     Reply = handle_deleting_room(NewArgs),
     {reply, Reply, State};

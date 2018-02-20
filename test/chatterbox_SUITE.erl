@@ -133,7 +133,7 @@ try_to_logout_when_logged_out(_) ->
 %%--------------------------------------------------------------------
 create_and_delete_room(_) ->
     Username = {"name", "Adam"},
-    Roomname = {"room name", "Brewster"},
+    Roomname = {"roomname", "Brewster"},
     Password = {"password", "Password"},
     Actions = [{{create_account, [Username, Password]}, "account is created"},
                {{login, [Username, Password]}, "logged in"},
@@ -147,7 +147,7 @@ create_and_delete_room(_) ->
 %%--------------------------------------------------------------------
 try_to_create_same_room_twice(_) ->
     Username = {"name", "Carol"},
-    Roomname = {"room name", "Koko"},
+    Roomname = {"roomname", "Koko"},
     Password = {"password", "Password"},
     Actions = [{{create_account, [Username, Password]}, "account is created"},
                {{login, [Username, Password]}, "logged in"},
@@ -159,7 +159,7 @@ try_to_create_same_room_twice(_) ->
 %%--------------------------------------------------------------------
 try_to_delete_room_when_not_created(_) ->
     Username = {"name", "Carol"},
-    Roomname = {"room name", "Koko"},
+    Roomname = {"roomname", "Koko"},
     Password = {"password", "Password"},
     Actions = [{{create_account, [Username, Password]}, "account is created"},
                {{login, [Username, Password]}, "logged in"},

@@ -1,10 +1,12 @@
 -module(chatterbox_websocket).
 
 -export([start/1, ws_loop/3, loop/2]).
--export([broadcast_server/1]).
+-export([broadcast_server/1, broadcast/1]).
 
 start(Port) ->
     Broadcaster = spawn_link(?MODULE, broadcast_server, [dict:new()]),
+    register(broadcaster, Broadcaster),
+    io:format(user, "broadcaster pid is ~p~n", [Broadcaster]),
     Options = [{name, client_access},
                {loop, {?MODULE, loop, [Broadcaster]}},
                {port, Port}],
@@ -16,7 +18,7 @@ ws_loop(Payload, Broadcaster, _) ->
     io:format("Received data:      ~p~n"
               "Response generated  ~p~n",
               [Payload, Response]),
-    Reply = build_response_message(Response),
+    Reply = build_json(response, Response),
     Broadcaster ! {broadcast, self(), Reply},
     Broadcaster.
 
@@ -63,7 +65,6 @@ broadcast_down(Pid, MRef, Pids) ->
     broadcast_sendall(Pid, "disconnected", NewPids).
 
 broadcast_sendall(_, Msg, Pids) ->
-    %% M = iolist_to_binary([pid_to_list(Pid), ": ", Msg]),
     dict:fold(
       fun (K, {Reply, MRef}, Acc) ->
               try
@@ -79,6 +80,10 @@ broadcast_sendall(_, Msg, Pids) ->
       end,
       dict:new(),
       Pids).
+
+broadcast(Msg) ->
+    Message = build_json(users, Msg),
+    broadcaster ! {broadcast, pid, Message}.
 
 remove_pid(Pid, Pids, MRef) ->
     case dict:find(Pid, Pids) of
@@ -108,6 +113,6 @@ decode(Args) ->
     Decoded = mochijson2:decode(Args, [{format, proplist}]),
     [{binary_to_list(X), binary_to_list(Y)} || {X, Y} <- Decoded].
 
-build_response_message(Response) ->
-    Struct = {struct, [{response, list_to_binary(Response)}]},
+build_json(Key, Message) ->
+    Struct = {struct, [{Key, list_to_binary(Message)}]},
     mochijson2:encode(Struct).

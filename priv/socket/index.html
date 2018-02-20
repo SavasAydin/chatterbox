@@ -1,271 +1,298 @@
 <!doctype html>
-<html>    
+<html>
     <head>
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-	<title>Chatterbox Demo</title>
-	<style>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+        <title>Chatterbox Demo</title>
+        <style>
 
-	 body{
-	     font-size: 17px;
-	     font-family: arial;
-	     background: #f4f4f4;
-	     line-height: 1.5em;
-	 }
+         body{
+             font-size: 17px;
+             font-family: arial;
+             background: #f4f4f4;
+             line-height: 1.5em;
+         }
 
-	 button{
-	     background-color: #4CAF50;
-	     font-size: 12px;
-	     color: white;
-	     padding: 14px 20px;
-	     margin: 8px 0;
-	     border: none;
-	     cursor: pointer;
-	     width: 100%;
-	 }
+         button{
+             background-color: #4CAF50;
+             font-size: 12px;
+             color: white;
+             padding: 14px 20px;
+             margin: 8px 0;
+             border: none;
+             cursor: pointer;
+             width: 100%;
+         }
 
-	 input[type=text]{
-	     width: 100%;
-	     padding: 12px 20px;
-	     margin: 8px 0;
-	     display: inline-block;
-	     border: 1px solid #ccc;
-	     box-sizing: border-box;
-	 }
+         input[type=text]{
+             width: 100%;
+             padding: 12px 20px;
+             margin: 8px 0;
+             display: inline-block;
+             border: 1px solid #ccc;
+             box-sizing: border-box;
+         }
 
-	 #init{
-	     padding: 14px;
-	     width: 50%;
-	     margin: 0px auto;
-	     text-align: center;
-	 }
-
-
-	 #logged_in{
-	     padding: 14px;
-	     width: 50%;
-	     margin: 0px auto;
-	     text-align: center;
-	     display: none
-	 }
+         #init{
+             padding: 14px;
+             width: 50%;
+             margin: 0px auto;
+             text-align: center;
+         }
 
 
-	 .modal {
-	     display: none; /* Hidden by default */
-	     position: fixed; /* Stay in place */
-	     z-index: 1; /* Sit on top */
-	     padding-top: 100px; /* Location of the box */
-	     left: 0;
-	     top: 0;
-	     width: 100%; /* Full width */
-	     height: 100%; /* Full height */
-	     overflow: auto; /* Enable scroll if needed */
-	     background-color: rgb(0,0,0); /* Fallback color */
-	     background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
-	     padding-top: 60px;
-	 }
+         #logged_in{
+             padding: 14px;
+             width: 50%;
+             margin: 0px auto;
+             text-align: center;
+             display: none
+         }
 
-	 .modal_content{
-	     background-color: #fefefe;
-	     margin: 5% auto 15% auto; /* 5% from top, 15% from bottom and centered */
-	     border: 1px solid #888;
-	     width: 80%;
-	     padding: 16px;
-	 }
 
-	 .modal-header {
-	     padding: 10px 16px;
-	     background-color: #5cb85c;
-	     text-align: center;
-	     color: white;
-	 }
+         .modal {
+             display: none; /* Hidden by default */
+             position: fixed; /* Stay in place */
+             z-index: 1; /* Sit on top */
+             padding-top: 100px; /* Location of the box */
+             left: 0;
+             top: 0;
+             width: 100%; /* Full width */
+             height: 100%; /* Full height */
+             overflow: auto; /* Enable scroll if needed */
+             background-color: rgb(0,0,0); /* Fallback color */
+             background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+             padding-top: 60px;
+         }
 
-	 .modal-body {
-	     padding: 10px 16px;}
+         .modal_content{
+             background-color: #fefefe;
+             margin: 5% auto 15% auto; /* 5% from top, 15% from bottom and centered */
+             border: 1px solid #888;
+             width: 80%;
+             padding: 16px;
+         }
 
-	 .modal-footer {
-	     padding: 2px 16px;
-	     text-align: center;
-	     color: red;
-	 }
+         .modal-header {
+             padding: 10px 16px;
+             background-color: #5cb85c;
+             text-align: center;
+             color: white;
+         }
 
-	 .close {
-	     color: white;
-	     float: right;
-	     font-size: 28px;
-	     font-weight: bold;
-	 }
+         .modal-body {
+             padding: 10px 16px;}
 
-	 .close:hover,
-	 .close:focus {
-	     color: #000;
-	     text-decoration: none;
-	     cursor: pointer;
-	 }
+         .modal-footer {
+             padding: 2px 16px;
+             text-align: center;
+             color: red;
+         }
 
-	</style>
+         .close {
+             color: white;
+             float: right;
+             font-size: 28px;
+             font-weight: bold;
+         }
+
+         .close:hover,
+         .close:focus {
+             color: #000;
+             text-decoration: none;
+             cursor: pointer;
+         }
+
+        </style>
     </head>
     <body>
-	<h1>Welcome to Chatterbox </h1>
+        <h1>Welcome to Chatterbox </h1>
 
-	<div id="init">
-	    <label id="displayCreateAccountL">Do you want to join chatterbox?</label><br>
-	    <button id="displayCreateAccountB" onclick="displayCreateAccount()">Create Account</button><br>
-	    <label id="displayLoginL">Already have an account?</label><br>
-	    <button onclick="displayLogin()">Login</button><br>
-	</div>
-	<div id="create_account" class="modal">
-	    <div class="modal_content">
-		<div class="modal-header">
-		    <span class="close">&times;</span>
-		    <label>Chatterbox - Create Your Account Now</label><br>
-		</div>
-		<div class="modal-body">
-		    <label><b>Username</b></label><br>
-		    <input id="account_name" type="text" placeholder="Enter Username"><br>
-		    <label><b>Password</b></label><br>
-		    <input id="account_password" type="text" placeholder="Enter Password"><br>
-		    <button onclick="create_account()" type="button">Create Account</button>
-		</div>
-		<div class="modal-footer">
-		    <label id="create_account_response"><b></b></label>
-		</div>
-	    </div>
-	</div>
+        <div id="init">
+            <label id="displayCreateAccountL">Do you want to join chatterbox?</label><br>
+            <button id="displayCreateAccountB" onclick="displayCreateAccount()">Create Account</button><br>
+            <label id="displayLoginL">Already have an account?</label><br>
+            <button onclick="displayLogin()">Login</button><br>
+        </div>
+        <div id="create_account" class="modal">
+            <div class="modal_content">
+                <div class="modal-header">
+                    <span class="close">&times;</span>
+                    <label>Chatterbox - Create Your Account Now</label><br>
+                </div>
+                <div class="modal-body">
+                    <label><b>Username</b></label><br>
+                    <input id="account_name" type="text" placeholder="Enter Username"><br>
+                    <label><b>Password</b></label><br>
+                    <input id="account_password" type="text" placeholder="Enter Password"><br>
+                    <button onclick="createAccount()" type="button">Create Account</button>
+                </div>
+                <div class="modal-footer">
+                    <label id="create_account_response"><b></b></label>
+                </div>
+            </div>
+        </div>
 
-	<div id="login" class="modal">
-	    <div class="modal_content">
-		<div class="modal-header">
-		    <span class="close">&times;</span>
-		    <label>Chatterbox - Login Now</label><br>
-		</div>
-		<div id="login" class="modal-body">
-		    <label>Username</label>
-		    <input id="login_name" type="text" placeholder="Enter Username">
-		    <label>Password</label>
-		    <input id="login_password" type="text"  placeholder="Enter Password"><br>
-		    <button onclick="login()" type="button">Login</button>
-		</div>
-		<div class="modal-footer">
-		    <label id="login_response"><b></b></label>
-		</div>
-	    </div>
-	</div>
+        <div id="login" class="modal">
+            <div class="modal_content">
+                <div class="modal-header">
+                    <span class="close">&times;</span>
+                    <label>Chatterbox - Login Now</label><br>
+                </div>
+                <div id="login" class="modal-body">
+                    <label>Username</label>
+                    <input id="login_name" type="text" placeholder="Enter Username">
+                    <label>Password</label>
+                    <input id="login_password" type="text"  placeholder="Enter Password"><br>
+                    <button onclick="login()" type="button">Login</button>
+                </div>
+                <div class="modal-footer">
+                    <label id="login_response"><b></b></label>
+                </div>
+            </div>
+        </div>
 
 
-	<div id="logged_in">
-	    <label>Do you want to create a chatterbox room?</label><br>
-	    <button onclick="displayCreateRoom()">Create Room</button><br>
-	    <label id="join">Do you want to join a room?</label><br>
-	    <button onclick="joinRoom()">Join Room</button><br>
-	    <label id="logout">Do you want to log out?</label><br>
-	    <button onclick="logout()">Logout</button><br>
-	    <label id="deleteAccount">Do you want to log out?</label><br>
-	    <button onclick="displayDeleteAccount()">Delete Account</button><br>
-	</div>
+        <div id="logged_in">
+            <label>Do you want to create a chatterbox room?</label><br>
+            <button onclick="displayCreateRoom()">Create Room</button><br>
+            <label id="join">Do you want to join a room?</label><br>
+            <button onclick="joinRoom()">Join Room</button><br>
+            <label>Do you want to delete your chatterbox room?</label><br>
+            <button onclick="displayDeleteRoom()">Delete Room</button><br>
+            <label id="logout">Do you want to log out?</label><br>
+            <button onclick="logout()">Logout</button><br>
+            <label id="deleteAccount">Do you want to log out?</label><br>
+            <button onclick="displayDeleteAccount()">Delete Account</button><br>
+        </div>
 
-	<div id="create_room" class="modal">
-	    <div class="modal_content">
-		<div class="modal-header">
-		    <span class="close">&times;</span>
-		    <label>Chatterbox - Create Your Chat Room Now</label><br>
-		</div>
-		<div class="modal-body">
-		    <label><b>Room Name</b></label><br>
-		    <input id="room_name" type="text" placeholder="Enter Room Name"><br>
-		    <label><b>Password</b></label><br>
-		    <input id="room_password" type="text" placeholder="Enter Password"><br>
-		    <button onclick="createRoom()" type="button">Create Room</button>
-		</div>
-		<div class="modal-footer">
-		    <label id="create_room_response"><b></b></label>
-		</div>
-	    </div>
-	</div>
+        <div id="create_room" class="modal">
+            <div class="modal_content">
+                <div class="modal-header">
+                    <span class="close">&times;</span>
+                    <label>Chatterbox - Create Your Chat Room Now</label><br>
+                </div>
+                <div class="modal-body">
+                    <label><b>Room Name</b></label><br>
+                    <input id="create_room_name" type="text" placeholder="Enter Room Name"><br>
+                    <button onclick="createRoom()" type="button">Create Room</button>
+                </div>
+                <div class="modal-footer">
+                    <label id="create_room_response"><b></b></label>
+                </div>
+            </div>
+        </div>
 
-	<div id="delete_account" class="modal">
-	    <div class="modal_content">
-		<div class="modal-header">
-		    <span class="close">&times;</span>
-		    <label>Chatterbox - Delete your account and services</label><br>
-		</div>
-		<div class="modal-body">
-		    <label><b>Password</b></label><br>
-		    <input id="delete_account_password" type="text" placeholder="Enter Password"><br>
-		    <button onclick="deleteAccount()" type="button">Delete Account</button>
-		</div>
-		<div class="modal-footer">
-		    <label id="delete_account_response"><b></b></label>
-		</div>
-	    </div>
-	</div>
+        <div id="delete_room" class="modal">
+            <div class="modal_content">
+                <div class="modal-header">
+                    <span class="close">&times;</span>
+                    <label>Chatterbox - Delete Your Chat Room</label><br>
+                </div>
+                <div class="modal-body">
+                    <label><b>Room Name</b></label><br>
+                    <input id="delete_room_name" type="text" placeholder="Enter Room Name"><br>
+                    <button onclick="deleteRoom()" type="button">Delete Room</button>
+                </div>
+                <div class="modal-footer">
+                    <label id="delete_room_response"><b></b></label>
+                </div>
+            </div>
+        </div>
 
-	<hr/>
+        <div id="delete_account" class="modal">
+            <div class="modal_content">
+                <div class="modal-header">
+                    <span class="close">&times;</span>
+                    <label>Chatterbox - Delete your account and services</label><br>
+                </div>
+                <div class="modal-body">
+                    <label><b>Password</b></label><br>
+                    <input id="delete_account_password" type="text" placeholder="Enter Password"><br>
+                    <button onclick="deleteAccount()" type="button">Delete Account</button>
+                </div>
+                <div class="modal-footer">
+                    <label id="delete_account_response"><b></b></label>
+                </div>
+            </div>
+        </div>
 
-	<script >
+        <hr/>
+        <ul id="users">
+        </ul>
+        <hr/>
+        <ul id="rooms">
+        </ul>
 
-	 var ws;
-	 var modals = document.getElementsByClassName('modal');
+        <script >
 
-	 function closeModalWhenClickedOutOfModal(){
-	     window.onclick = function(event){
-		 for (var i = 0; i < modals.length; i++) {
-		     if(event.target == modals[i]){
-			 modals[i].style.display = 'none';
-		     }
-		 }
-	     }
-	 }
+         var ws;
+         var modals = document.getElementsByClassName('modal');
 
-	 function closeModalWhenClickedX(){
-	     var x = document.getElementsByClassName("close");
+         function closeModalWhenClickedOutOfModal(){
+             window.onclick = function(event){
+                 for (var i = 0; i < modals.length; i++) {
+                     if(event.target == modals[i]){
+                         modals[i].style.display = 'none';
+                     }
+                 }
+             }
+         }
 
-	     x[0].onclick = function() {
-		 modals[0].style.display = 'none';
-	     }
+         function closeModalWhenClickedX(){
+             var x = document.getElementsByClassName("close");
 
-	     x[1].onclick = function() {
-		 modals[1].style.display = 'none';
-	     }
+             x[0].onclick = function() {
+                 modals[0].style.display = 'none';
+             }
 
-	     x[2].onclick = function() {
-		 modals[2].style.display = 'none';
-	     }
+             x[1].onclick = function() {
+                 modals[1].style.display = 'none';
+             }
 
-	     x[3].onclick = function() {
-		 modals[3].style.display = 'none';
-	     }
+             x[2].onclick = function() {
+                 modals[2].style.display = 'none';
+             }
 
-	 }
+             x[3].onclick = function() {
+                 modals[3].style.display = 'none';
+             }
 
-	 function displayCreateAccount(){
-	     document.getElementById("create_account_response").innerHTML = "";
-	     document.getElementById('create_account').style.display = 'block';
-	 }
+         }
 
-	 function displayLogin(){
-	     document.getElementById("login_response").innerHTML = "";
-	     document.getElementById('login').style.display = 'block';
-	 }
+         function displayCreateAccount(){
+             document.getElementById("create_account_response").innerHTML = "";
+             document.getElementById('create_account').style.display = 'block';
+         }
 
-	 function displayCreateRoom(){
-	     document.getElementById("create_room_response").innerHTML = "";
-	     document.getElementById('create_room').style.display = 'block';
-	 }
+         function displayLogin(){
+             document.getElementById("login_response").innerHTML = "";
+             document.getElementById('login').style.display = 'block';
+         }
 
-	 function displayDeleteAccount(){
-	     document.getElementById("delete_account_response").innerHTML = "";
-	     document.getElementById('delete_account').style.display = 'block';
-	 }
+         function displayCreateRoom(){
+             document.getElementById("create_room_response").innerHTML = "";
+             document.getElementById('create_room').style.display = 'block';
+         }
 
-	 function create_account(){
-	     var name = document.getElementById("account_name").value;
-	     var password = document.getElementById("account_password").value;
-	     console.log("creating.. username " + name + " password " + password);
-	     var formdata = JSON.stringify({'name': name, 'password': password});
-	     ws.send("account_server create " + formdata);
-	     ws.onmessage = function(e){
+         function displayDeleteRoom(){
+             document.getElementById("delete_room_response").innerHTML = "";
+             document.getElementById('delete_room').style.display = 'block';
+         }
+
+         function displayDeleteAccount(){
+             document.getElementById("delete_account_response").innerHTML = "";
+             document.getElementById('delete_account').style.display = 'block';
+         }
+
+         function createAccount(){
+             var name = document.getElementById("account_name").value;
+             var password = document.getElementById("account_password").value;
+             console.log("creating.. username " + name + " password " + password);
+             var formdata = JSON.stringify({'name': name, 'password': password});
+             ws.send("account_server create " + formdata);
+             ws.onmessage = function(e){
                  var response = JSON.parse(e.data).response;
-		 console.log("response is " + response);
+                 console.log("response is " + response);
                  if (response.includes("created") == true){
                      var dcl = document.getElementById('displayCreateAccountL');
                      dcl.innerHTML = "Your account has been created";
@@ -280,112 +307,154 @@
              }
          }
 
-	 function login(){
-	     var name = document.getElementById("login_name").value;
-	     var password = document.getElementById("login_password").value;
-	     console.log("logining.. username " + name + " password " + password);
-	     var formdata = JSON.stringify({'name': name, 'password': password});
-	     ws.send("account_server login " + formdata);
+         function login(){
+             var name = document.getElementById("login_name").value;
+             var password = document.getElementById("login_password").value;
+             console.log("logining.. username " + name + " password " + password);
+             var formdata = JSON.stringify({'name': name, 'password': password});
+             ws.send("account_server login " + formdata);
              ws.onmessage = function(e){
-		 var response = JSON.parse(e.data).response;
-		 console.log("login response is " + response);
-		 if(response.includes("logged in") == true){
-		     modals[1].style.display = 'none';
-		     var init = document.getElementById('init');
-		     init.style.display = 'none';
-		     var logged_in = document.getElementById('logged_in');
-		     logged_in.style.display = 'block';
-		 } else {
-		     document.getElementById("login_response").innerHTML = response;
-		 }
-	     }
+                 var response = JSON.parse(e.data).response;
+                 console.log("login response is " + response);
+                 if(response.includes("logged in") == true){
+                     modals[1].style.display = 'none';
+                     var init = document.getElementById('init');
+                     init.style.display = 'none';
+                     var logged_in = document.getElementById('logged_in');
+                     logged_in.style.display = 'block';
+                 } else {
+                     document.getElementById("login_response").innerHTML = response;
+                 }
+             }
          }
 
-	 function createRoom(){
-	     var name = document.getElementById("room_name").value;
-	     var password = document.getElementById("room_password").value;
-	     console.log("creating.. room " + name + " password " + password);
-	     var formdata = {'name': name, 'password': password};
-	     $.post("room_server create", formdata, function(data){
-		 var response = data[0].response;
-		 console.log("create room response is " + response);
-		 if (response.includes("created") == true){
-		     modals[2].style.display = 'none';
-		 } else {
-		     document.getElementById("create_room_response").innerHTML = response;
-		 }
-	     }, "json");
-	 }
+         function createRoom(){
+             var roomname = document.getElementById("create_room_name").value;
+             var owner = document.getElementById("login_name").value;
+             console.log("creating.. room " + roomname + " owner " + owner);
+             var formdata = JSON.stringify({'name': owner, 'roomname': roomname});
+             ws.send("room_server create " + formdata);
+             ws.onmessage = function(event){
+                 var response = JSON.parse(event.data).response;
+                 console.log("create room response is " + response);
+                 if (response.includes("created") == true){
+                     modals[2].style.display = 'none';
+                 } else {
+                     document.getElementById("create_room_response").innerHTML = response;
+                 }
+             }
+         }
 
-	 function logout(){
-	     var name = document.getElementById("login_name").value;
-	     console.log("logging out.. username " + name);
-	     var formdata = {'name': name};
-	     $.post("account_server logout", formdata, function(data){
-		 var response = data[0].response;
-		 console.log("logout response is " + response);
-		 if(response == "logged out"){
-		     var logged_in = document.getElementById('logged_in');
-		     logged_in.style.display = 'none';
-		     var init = document.getElementById('init');
-		     init.style.display = 'block';
-		     var dcl = document.getElementById('displayCreateAccountL');
-		     dcl.innerHTML = 'Do you want to join chatterbox?';
-		     var dcb = document.getElementById('displayCreateAccountB');
-		     dcb.style.display = 'block';
-		     var dll = document.getElementById('displayLoginL');
-		     dll.innerHTML = 'Already have an account?';
-		 }
-		 else {
-		     console.log("failed to logout");
-		 }
-	     }, "json");
-	 }
+         function deleteRoom(){
+             var roomname = document.getElementById("delete_room_name").value;
+             var owner = document.getElementById("login_name").value;
+             console.log("deleting.. room " + roomname + " owner " + owner);
+             var formdata = JSON.stringify({'name': owner, 'roomname': roomname});
+             ws.send("room_server delete " + formdata);
+             ws.onmessage = function(event){
+                 var response = JSON.parse(event.data).response;
+                 console.log("delete room response is " + response);
+                 if (response.includes("deleted") == true){
+                     modals[3].style.display = 'none';
+                 } else {
+                     document.getElementById("delete_room_response").innerHTML = response;
+                 }
+             }
+         }
 
-	 function deleteAccount(){
-	     var name = document.getElementById("login_name").value;
-	     var password = document.getElementById("delete_account_password").value;
-	     console.log("deleting.. username " + name + " password " + password);
-	     var formdata = {'name': name, 'password' : password};
-	     $.post("account_server delete", formdata, function(data){
-		 var response = data[0].response;
-		 console.log("delete account response is " + response);
-		 if (response.includes("deleted") == true){
-		     modals[3].style.display = 'none';
-		     var logged_in = document.getElementById('logged_in');
-		     logged_in.style.display = 'none';
-		     var init = document.getElementById('init');
-		     init.style.display = 'block';
-		     var dcl = document.getElementById('displayCreateAccountL');
-		     dcl.innerHTML = 'Do you want to join chatterbox?';
-		     var dcb = document.getElementById('displayCreateAccountB');
-		     dcb.style.display = 'block';
-		     var dll = document.getElementById('displayLoginL');
-		     dll.innerHTML = 'Already have an account?';
-		 } else {
-		     document.getElementById("delete_account_response").innerHTML = response;
-		 }
-	     }, "json");
-	 }
+         function logout(){
+             var name = document.getElementById("login_name").value;
+             console.log("logging out.. username " + name);
+             var formdata = JSON.stringify({'name': name});
+             ws.send("account_server logout " + formdata);
+             ws.onmessage = function(event){
+                 var response = JSON.parse(event.data).response;
+                 console.log("logout response is " + response);
+                 if(response == "logged out"){
+                     var logged_in = document.getElementById('logged_in');
+                     logged_in.style.display = 'none';
+                     var init = document.getElementById('init');
+                     init.style.display = 'block';
+                     var dcl = document.getElementById('displayCreateAccountL');
+                     dcl.innerHTML = 'Do you want to join chatterbox?';
+                     var dcb = document.getElementById('displayCreateAccountB');
+                     dcb.style.display = 'block';
+                     var dll = document.getElementById('displayLoginL');
+                     dll.innerHTML = 'Already have an account?';
+                 }
+                 else {
+                     console.log("failed to logout");
+                 }
+             }
+         }
 
+         function deleteAccount(){
+             var name = document.getElementById("login_name").value;
+             var password = document.getElementById("delete_account_password").value;
+             console.log("deleting.. username " + name + " password " + password);
+             var formdata = JSON.stringify({'name': name, 'password' : password});
+             ws.send("account_server delete " + formdata);
+             ws.onmessage = function(event){
+                 var response = JSON.parse(event.data).response;
+                 console.log("delete account response is " + response);
+                 if (response.includes("deleted") == true){
+                     modals[4].style.display = 'none';
+                     var logged_in = document.getElementById('logged_in');
+                     logged_in.style.display = 'none';
+                     var init = document.getElementById('init');
+                     init.style.display = 'block';
+                     var dcl = document.getElementById('displayCreateAccountL');
+                     dcl.innerHTML = 'Do you want to join chatterbox?';
+                     var dcb = document.getElementById('displayCreateAccountB');
+                     dcb.style.display = 'block';
+                     var dll = document.getElementById('displayLoginL');
+                     dll.innerHTML = 'Already have an account?';
+                 } else {
+                     document.getElementById("delete_account_response").innerHTML = response;
+                 }
+             }
+         }
 
-	 $(document).ready(function(){
-	     closeModalWhenClickedOutOfModal()
-	     closeModalWhenClickedX()
+         function updateOnlineUsers(){
+             ws.onmessage = function(event){
+                 if (isJson(event.data)){
+                     var users = JSON.parse(event.data).users;
+                     console.log("Users " + users);
+                 } else {
+                     console.log("Not a JSON - received " + event.data);
+                 }
+             }
+         }
 
-	     if (!window.WebSocket) {
-		 alert("WebSocket not supported by this browser");
-	     }
-	     ws = new WebSocket("ws://" + location.host + "/");
-	     ws.onopen = function () {
-		 console.log('CONNECTED');
-	     }
-	     ws.onclose = function () {
-		 console.log('CLOSED');
-	     }
+         function isJson(Obj){
+             var isJson = false;
+             try {
+                 var json = JSON.parse(Obj);
+                 isJson = (typeof(json) === 'object');
+             } catch (e) {}
+             return isJson;
+         }
 
-	 })
+         function openWebsocket(){
+             if (!window.WebSocket) {
+                 alert("WebSocket not supported by this browser");
+             }
+             ws = new WebSocket("ws://" + location.host + "/");
+             ws.onopen = function (){
+                 console.log('CONNECTED');
+             }
+             ws.onclose = function () {
+                 console.log('CLOSED');
+             }
+         }
 
-	</script>
+         $(document).ready(function(){
+             closeModalWhenClickedOutOfModal()
+             closeModalWhenClickedX()
+             openWebsocket()
+             updateOnlineUsers()
+         })
+
+        </script>
     </body>
 </html>
