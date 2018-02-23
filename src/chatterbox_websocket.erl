@@ -29,10 +29,10 @@ loop(Req, Broadcaster) ->
     loop(Req, Broadcaster, IsConnected).
 
 loop(Req, _, false) ->
-    io:format(user, "loop false~n", []),
+    io:format(user, "serve file~n", []),
     mochiweb_request:serve_file([], doc_root(), Req);
 loop(Req, Broadcaster, true) ->
-    io:format(user, "loop true ~n", []),
+    io:format(user, "upgrade connection~n", []),
     {ReentryWs, ReplyChannel} = mochiweb_websocket:upgrade_connection(
                                   Req, fun ?MODULE:ws_loop/3),
     Broadcaster ! {register, self(), ReplyChannel},
@@ -41,13 +41,10 @@ loop(Req, Broadcaster, true) ->
 broadcast_server(Pids) ->
     Pids1 = receive
                 {register, Pid, Channel} ->
-                    io:format(user, "broadcast_server register~nPid    :~p~nChannel:~p~n", [Pid, Channel]),
                     broadcast_register(Pid, Channel, Pids);
                 {broadcast, Pid, Message} ->
-                    io:format(user, "broadcast_server broadcast~nPid    :~p~nMessage:~p~n", [Pid, Message]),
                     broadcast_sendall(Pid, Message, Pids);
-                {'DOWN', MRef, process, Pid, Reason} ->
-                    io:format(user, "broadcast_server down~nPid    :~p~nReason:~p~n", [Pid, Reason]),
+                {'DOWN', MRef, process, Pid, _} ->
                     broadcast_down(Pid, MRef, Pids);
                 Msg ->
                     io:format("Unknown message: ~p~n", [Msg]),
@@ -57,20 +54,26 @@ broadcast_server(Pids) ->
 
 broadcast_register(Pid, Channel, Pids) ->
     MRef = erlang:monitor(process, Pid),
+    Channel("connected"),
     Dict = dict:store(Pid, {Channel, MRef}, Pids),
-    broadcast_sendall(Pid, "connected", Dict).
+    L = dict:to_list(Dict),
+    io:format(user, "broadcast_register~nPid ~p~nDict ~p~nMsg connected~n~n", [Pid, L]),
+    Dict.
 
 broadcast_down(Pid, MRef, Pids) ->
     NewPids = remove_pid(Pid, Pids, MRef),
-    broadcast_sendall(Pid, "disconnected", NewPids).
+    L = dict:to_list(NewPids),
+    io:format(user, "broadcast_down~nPid ~p~nDict ~p~n~n", [Pid, L]),
+    NewPids.
 
-broadcast_sendall(_, Msg, Pids) ->
+broadcast_sendall(Pid, Msg, Pids) ->
+    L = dict:to_list(Pids),
+    io:format(user, "broadcast_sendall~nPid ~p~nPids ~p~nMsg ~p~n~n", [Pid, L, Msg]),
     dict:fold(
       fun (K, {Reply, MRef}, Acc) ->
               try
                   begin
                       Reply(Msg),
-                      io:format(user, "K    :~p~nReply  :~p~nM      :~p~n", [K, Reply, Msg]),
                       dict:store(K, {Reply, MRef}, Acc)
                   end
               catch
