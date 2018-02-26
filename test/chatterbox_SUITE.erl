@@ -2,8 +2,11 @@
 
 -export([suite/0,
          all/0,
+         groups/0,
          init_per_suite/1,
          end_per_suite/1,
+         init_per_group/2,
+         end_per_group/2,
          init_per_testcase/2,
          end_per_testcase/2
         ]).
@@ -205,9 +208,18 @@ init_per_suite(Config) ->
 end_per_suite(_Config) ->
     ok.
 
+init_per_group(Group, Config) ->
+    ok = application:set_env(chatterbox, protocol, Group),
+    ok = application:set_env(chatterbox, port, ?PORT),
+    Config.
+
+end_per_group(_, Config) ->
+    ok = application:unset_env(chatterbox, protocol),
+    ok = application:unset_env(chatterbox, port),
+    Config.
+
 init_per_testcase(_TestCase, Config) ->
     {ok, _} = chatterbox_client:start_link(),
-    ok = application:set_env(chatterbox, port, ?PORT),
     ok = application:start(chatterbox),
     Config.
 
@@ -216,6 +228,14 @@ end_per_testcase(_TestCase, Config) ->
     Config.
 
 all() ->
+    [{group, websocket},
+     {group, http}].
+
+groups() ->
+    [{websocket, [], testcases()},
+     {http, [], testcases()}].
+
+testcases() ->
     [create_and_delete_account,
      try_to_create_same_account_twice,
      try_to_delete_account_when_not_created,
