@@ -1,16 +1,41 @@
 -module(chatterbox_websocket).
 
--export([start/1, ws_loop/3, loop/2]).
--export([broadcast_server/1, broadcast/1]).
+-export([start/1, stop/0, ws_loop/3, loop/2]).
+-export([broadcast_server/1]).
 
 start(Port) ->
+    Parent = self(),
+    Pid = spawn(fun() ->
+                        start_link(Port),
+                        register(?MODULE, self()),
+                        Parent ! started,
+                        receive
+                            stop ->
+                                Parent ! ok
+                        end
+                end),
+    receive
+        started ->
+            {ok, Pid}
+    after 100 ->
+            {error, server_start_timeout}
+    end.
+
+start_link(Port) ->
     Broadcaster = spawn_link(?MODULE, broadcast_server, [dict:new()]),
-    register(broadcaster, Broadcaster),
-    io:format(user, "broadcaster pid is ~p~n", [Broadcaster]),
     Options = [{name, client_access},
                {loop, {?MODULE, loop, [Broadcaster]}},
                {port, Port}],
     mochiweb_http:start_link(Options).
+
+stop() ->
+    ?MODULE ! stop,
+    receive
+        ok ->
+            ok
+    after 100 ->
+            {error, server_stop_timeout}
+    end.
 
 ws_loop(Payload, Broadcaster, _) ->
     io:format("Received data: ~p~n", [Payload]),
@@ -83,10 +108,6 @@ broadcast_sendall(Pid, Msg, Pids) ->
       end,
       dict:new(),
       Pids).
-
-broadcast(Msg) ->
-    Message = build_json(users, Msg),
-    broadcaster ! {broadcast, pid, Message}.
 
 remove_pid(Pid, Pids, MRef) ->
     case dict:find(Pid, Pids) of

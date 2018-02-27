@@ -3,7 +3,6 @@
 
 start(Port) ->
     DocRoot = index_file(),
-    io:format(user, "index file ~s~n", [DocRoot]),
     Options1 = web_specs(Port),
     Loop = fun (Req) -> ?MODULE:loop(Req, DocRoot) end,
     mochiweb_http:start([{name, ?MODULE}, {loop, Loop} | Options1]).
