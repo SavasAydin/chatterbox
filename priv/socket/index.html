@@ -419,7 +419,7 @@
              ws.onmessage = function(event){
                  if (isJson(event.data)){
                      var users = JSON.parse(event.data).users;
-                     console.log("Users " + users);
+                     console.log("updateOnlineUsers  " + JSON.parse(event.data) + " users " + users);
                  } else {
                      console.log("Not a JSON - received " + event.data);
                  }

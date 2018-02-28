@@ -44,7 +44,7 @@ ws_loop(Payload, Broadcaster, _) ->
               "Response generated  ~p~n",
               [Payload, Response]),
     Reply = build_json(response, Response),
-    Broadcaster ! {broadcast, self(), Reply},
+    Broadcaster ! {send, self(), Reply},
     Broadcaster.
 
 loop(Req, Broadcaster) ->
@@ -67,6 +67,8 @@ broadcast_server(Pids) ->
     Pids1 = receive
                 {register, Pid, Channel} ->
                     broadcast_register(Pid, Channel, Pids);
+                {send, Pid, Message} ->
+                    broadcast_send(Pid, Message, Pids);
                 {broadcast, Pid, Message} ->
                     broadcast_sendall(Pid, Message, Pids);
                 {'DOWN', MRef, process, Pid, _} ->
@@ -85,11 +87,16 @@ broadcast_register(Pid, Channel, Pids) ->
     io:format(user, "broadcast_register~nPid ~p~nDict ~p~nMsg connected~n~n", [Pid, L]),
     Dict.
 
-broadcast_down(Pid, MRef, Pids) ->
-    NewPids = remove_pid(Pid, Pids, MRef),
-    L = dict:to_list(NewPids),
-    io:format(user, "broadcast_down~nPid ~p~nDict ~p~n~n", [Pid, L]),
-    NewPids.
+broadcast_send(Pid, Msg, Pids) ->
+    case dict:find(Pid, Pids) of
+        {ok, {Channel, _}}->
+            Channel(Msg);
+        _ ->
+            ok
+    end,
+    L = dict:to_list(Pids),
+    io:format(user, "broadcast_send~nPid ~p~nDict ~p~nMsg ~p~n~n", [Pid, L, Msg]),
+    Pids.
 
 broadcast_sendall(Pid, Msg, Pids) ->
     L = dict:to_list(Pids),
@@ -108,6 +115,12 @@ broadcast_sendall(Pid, Msg, Pids) ->
       end,
       dict:new(),
       Pids).
+
+broadcast_down(Pid, MRef, Pids) ->
+    NewPids = remove_pid(Pid, Pids, MRef),
+    L = dict:to_list(NewPids),
+    io:format(user, "broadcast_down~nPid ~p~nDict ~p~n~n", [Pid, L]),
+    NewPids.
 
 remove_pid(Pid, Pids, MRef) ->
     case dict:find(Pid, Pids) of
