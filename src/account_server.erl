@@ -3,6 +3,7 @@
 -behaviour(gen_server).
 
 -export([start_link/0,
+         register_broadcaster/1,
          create/1,
          is_created/1,
          delete/1,
@@ -18,7 +19,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {}).
+-record(state, {broadcaster}).
 
 start_link() ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
@@ -26,6 +27,9 @@ start_link() ->
 init([]) ->
     process_flag(trap_exit, true),
     {ok, #state{}}.
+
+register_broadcaster(Pid) ->
+    gen_server:cast(?MODULE, {register, Pid}).
 
 create(Args) ->
     gen_server:call(?MODULE, {create, Args}).
@@ -65,7 +69,8 @@ handle_call({delete, Args}, _, State) ->
 handle_call({login, Args}, _, State) ->
     Tags = ["name", "password"],
     NewArgs = chatterbox_lib:get_values(Tags, Args),
-    Reply = handle_login(NewArgs),
+    Broadcaster = State#state.broadcaster,
+    Reply = handle_login([Broadcaster | NewArgs]),
     {reply, Reply, State};
 
 handle_call({is_logged_in, {"name", Username}}, _, State) ->
@@ -81,6 +86,8 @@ handle_call(_Request, _From, State) ->
     {reply, Reply, State}.
 
 %%--------------------------------------------------------------------
+handle_cast({register, Pid}, State) ->
+    {noreply, State#state{broadcaster = Pid}};
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
@@ -120,19 +127,20 @@ delete_if_exists([Username, Password]) ->
             "account was not created"
     end.
 
-handle_login([Username, Password]) ->
+handle_login([Broadcaster, Username, Password]) ->
     case logged_in(Username) of
         false ->
-            login_if_authorized(Username, Password);
+            login_if_authorized(Broadcaster, Username, Password);
         true ->
             "already logged in"
     end.
 
-login_if_authorized(Username, Password) ->
+login_if_authorized(Broadcaster, Username, Password) ->
     case ets:lookup(accounts, Username) of
         [{Username, Password}] ->
             account:start_account_process(Username),
             chatterbox_debugger:increment_logged_accounts(),
+            update_online_users(Broadcaster, Username),
             "logged in";
         [_] ->
             "username or password is wrong";
@@ -152,3 +160,9 @@ handle_logout(Username) ->
 
 logged_in(Username) ->
     whereis(?TO_ATOM(Username)) /= undefined.
+
+update_online_users(Broadcaster, Username) ->
+    spawn(fun() ->
+                  timer:sleep(10),
+                  chatterbox_websocket:update(Broadcaster, Username)
+          end).

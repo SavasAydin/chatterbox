@@ -1,7 +1,7 @@
 -module(chatterbox_websocket).
 
 -export([start/1, stop/0, ws_loop/3, loop/2]).
--export([broadcast_server/1]).
+-export([broadcast_server/1, update/2]).
 
 start(Port) ->
     Parent = self(),
@@ -37,23 +37,6 @@ stop() ->
             {error, server_stop_timeout}
     end.
 
-ws_loop([<<"account_server login ", T/binary>>], Broadcaster, _) ->
-    Args = decode(binary_to_list(T)),
-    Response = account_server:login(Args),
-    Reply = build_json(response, Response),
-    Broadcaster ! {send, self(), Reply},
-    io:format("Received login request args: ~p~n"
-              "Response generated:          ~p~n",
-              [Args, Response]),
-    case Response of
-        "logged in" ->
-            User = proplists:get_value("name", Args),
-            Users = build_json(users, User),
-            Broadcaster ! {broadcast, self, Users};
-        _ ->
-            do_nothing
-    end,
-    Broadcaster;
 ws_loop(Payload, Broadcaster, _) ->
     io:format("Received data: ~p~n", [Payload]),
     Response = handle_request(Payload),
@@ -62,7 +45,6 @@ ws_loop(Payload, Broadcaster, _) ->
               [Payload, Response]),
     Reply = build_json(response, Response),
     Broadcaster ! {send, self(), Reply},
-
     Broadcaster.
 
 loop(Req, Broadcaster) ->
@@ -79,6 +61,7 @@ loop(Req, Broadcaster, true) ->
     {ReentryWs, ReplyChannel} = mochiweb_websocket:upgrade_connection(
                                   Req, fun ?MODULE:ws_loop/3),
     Broadcaster ! {register, self(), ReplyChannel},
+    ok = account_server:register_broadcaster(Broadcaster),
     ReentryWs(Broadcaster).
 
 broadcast_server(Pids) ->
@@ -87,8 +70,8 @@ broadcast_server(Pids) ->
                     broadcast_register(Pid, Channel, Pids);
                 {send, Pid, Message} ->
                     broadcast_send(Pid, Message, Pids);
-                {broadcast, Pid, Message} ->
-                    broadcast_sendall(Pid, Message, Pids);
+                {broadcast, Message} ->
+                    broadcast_sendall(Message, Pids);
                 {'DOWN', MRef, process, Pid, _} ->
                     broadcast_down(Pid, MRef, Pids);
                 Msg ->
@@ -116,9 +99,9 @@ broadcast_send(Pid, Msg, Pids) ->
     io:format(user, "broadcast_send~nPid ~p~nDict ~p~nMsg ~p~n~n", [Pid, L, Msg]),
     Pids.
 
-broadcast_sendall(Pid, Msg, Pids) ->
+broadcast_sendall(Msg, Pids) ->
     L = dict:to_list(Pids),
-    io:format(user, "broadcast_sendall~nPid ~p~nPids ~p~nMsg ~p~n~n", [Pid, L, Msg]),
+    io:format(user, "broadcast_sendall~nPids ~p~nMsg ~p~n~n", [L, Msg]),
     dict:fold(
       fun (K, {Reply, MRef}, Acc) ->
               try
@@ -163,6 +146,11 @@ handle_request([Payload]) ->
     Args = decode(T),
     Module:Fun(Args).
 
+update(undefined, _) ->
+    ok;
+update(Broadcaster, Username) ->
+    Msg = build_json("users", Username),
+    Broadcaster ! {broadcast, Msg}.
 
 decode(Args) ->
     Decoded = mochijson2:decode(Args, [{format, proplist}]),
