@@ -323,7 +323,7 @@
                      var logged_in = document.getElementById('logged_in');
                      logged_in.style.display = 'block';
                  } else {
-                     document.getElementById("login_response").innerHTML = response;
+                     console.log("login  response is not logged  in - it is " + response);
                  }
              }
          }
@@ -418,8 +418,11 @@
          function updateOnlineUsers(){
              ws.onmessage = function(event){
                  if (isJson(event.data)){
-                     var users = JSON.parse(event.data).users;
                      console.log("updateOnlineUsers  " + JSON.parse(event.data) + " users " + users);
+                     var users = JSON.parse(event.data).users;
+                     var node = document.createElement("li");
+                     node.appendChild(document.createTextNode(users))
+                     document.getElementById("users").appendChild(node);
                  } else {
                      console.log("Not a JSON - received " + event.data);
                  }

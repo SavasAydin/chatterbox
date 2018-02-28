@@ -37,6 +37,23 @@ stop() ->
             {error, server_stop_timeout}
     end.
 
+ws_loop([<<"account_server login ", T/binary>>], Broadcaster, _) ->
+    Args = decode(binary_to_list(T)),
+    Response = account_server:login(Args),
+    Reply = build_json(response, Response),
+    Broadcaster ! {send, self(), Reply},
+    io:format("Received login request args: ~p~n"
+              "Response generated:          ~p~n",
+              [Args, Response]),
+    case Response of
+        "logged in" ->
+            User = proplists:get_value("name", Args),
+            Users = build_json(users, User),
+            Broadcaster ! {broadcast, self, Users};
+        _ ->
+            do_nothing
+    end,
+    Broadcaster;
 ws_loop(Payload, Broadcaster, _) ->
     io:format("Received data: ~p~n", [Payload]),
     Response = handle_request(Payload),
@@ -45,6 +62,7 @@ ws_loop(Payload, Broadcaster, _) ->
               [Payload, Response]),
     Reply = build_json(response, Response),
     Broadcaster ! {send, self(), Reply},
+
     Broadcaster.
 
 loop(Req, Broadcaster) ->
