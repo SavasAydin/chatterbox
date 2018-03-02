@@ -32,7 +32,7 @@ list_room_users([Username, Roomname]) ->
     ?TO_ATOM(Username) ! {user_list_request, Roomname},
     no_reply.
 
-send([{"name", To}, {From, Message}]) ->
+send([_, {"name", To}, {From, Message}]) ->
     ?TO_ATOM(To) ! {private_message, {From, Message}},
     sent.
 

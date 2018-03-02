@@ -163,6 +163,12 @@
             <button onclick="logout()">Logout</button><br>
             <label id="deleteAccount">Do you want to log out?</label><br>
             <button onclick="displayDeleteAccount()">Delete Account</button><br>
+            <hr/>
+            <ul id="users">
+            </ul>
+            <hr/>
+            <ul id="rooms">
+            </ul>
         </div>
 
         <div id="create_room" class="modal">
@@ -217,12 +223,6 @@
         </div>
 
         <hr/>
-        <ul id="users">
-        </ul>
-        <hr/>
-        <ul id="rooms">
-        </ul>
-
         <script >
 
          var ws;
@@ -322,6 +322,7 @@
                      init.style.display = 'none';
                      var logged_in = document.getElementById('logged_in');
                      logged_in.style.display = 'block';
+                     updateOnlineUsers();
                  } else {
                      console.log("login  response is not logged  in - it is " + response);
                  }
@@ -418,11 +419,13 @@
          function updateOnlineUsers(){
              ws.onmessage = function(event){
                  if (isJson(event.data)){
-                     console.log("updateOnlineUsers  " + JSON.parse(event.data) + " users " + users);
                      var users = JSON.parse(event.data).users;
                      var node = document.createElement("li");
                      node.appendChild(document.createTextNode(users))
                      document.getElementById("users").appendChild(node);
+                     console.log("updateOnlineUsers  " + JSON.parse(event.data) + " users " + users);
+                     console.log("updateOnlineUsers  stringified" + JSON.stringify(event.data));
+
                  } else {
                      console.log("Not a JSON - received " + event.data);
                  }
@@ -455,7 +458,6 @@
              closeModalWhenClickedOutOfModal()
              closeModalWhenClickedX()
              openWebsocket()
-             updateOnlineUsers()
          })
 
         </script>

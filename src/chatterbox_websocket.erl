@@ -1,7 +1,7 @@
 -module(chatterbox_websocket).
 
 -export([start/1, stop/0, ws_loop/3, loop/2]).
--export([broadcast_server/1, update/2]).
+-export([broadcast_server/1, update/3]).
 
 start(Port) ->
     Parent = self(),
@@ -70,8 +70,8 @@ broadcast_server(Pids) ->
                     broadcast_register(Pid, Channel, Pids);
                 {send, Pid, Message} ->
                     broadcast_send(Pid, Message, Pids);
-                {broadcast, Message} ->
-                    broadcast_sendall(Message, Pids);
+                {broadcast, Keys, Message} ->
+                    broadcast_sendall(Message, Keys, Pids);
                 {'DOWN', MRef, process, Pid, _} ->
                     broadcast_down(Pid, MRef, Pids);
                 Msg ->
@@ -99,23 +99,13 @@ broadcast_send(Pid, Msg, Pids) ->
     io:format(user, "broadcast_send~nPid ~p~nDict ~p~nMsg ~p~n~n", [Pid, L, Msg]),
     Pids.
 
-broadcast_sendall(Msg, Pids) ->
+broadcast_sendall(Msg, Keys, Pids) ->
     L = dict:to_list(Pids),
-    io:format(user, "broadcast_sendall~nPids ~p~nMsg ~p~n~n", [L, Msg]),
-    dict:fold(
-      fun (K, {Reply, MRef}, Acc) ->
-              try
-                  begin
-                      Reply(Msg),
-                      dict:store(K, {Reply, MRef}, Acc)
-                  end
-              catch
-                  _:_ ->
-                      Acc
-              end
-      end,
-      dict:new(),
-      Pids).
+    io:format(user,
+              "broadcast_sendall~n"
+              "Keys ~p~nPids ~p~nMsg ~p~n~n", [Keys, L, Msg]),
+    [broadcast_send(Key, Msg, Pids) || Key <- Keys],
+    Pids.
 
 broadcast_down(Pid, MRef, Pids) ->
     NewPids = remove_pid(Pid, Pids, MRef),
@@ -144,13 +134,21 @@ handle_request([Payload]) ->
     Module = list_to_atom(M),
     Fun = list_to_atom(F),
     Args = decode(T),
-    Module:Fun(Args).
+    Module:Fun([{"pid", self()} | Args]).
 
-update(undefined, _) ->
+update(undefined, _, _) ->
+    io:format("update: broadcaster is undefined~n~n", []),
     ok;
-update(Broadcaster, Username) ->
+update(_, [], _) ->
+    io:format("update: pids are empty~n~n", []),
+    ok;
+update(_, _, []) ->
+    io:format("update: msg is empty~n~n", []),
+    ok;
+update(Broadcaster, Pids, Username) ->
+    io:format("update: pids are ~p~n~n", [Pids]),
     Msg = build_json("users", Username),
-    Broadcaster ! {broadcast, Msg}.
+    Broadcaster ! {broadcast, Pids, Msg}.
 
 decode(Args) ->
     Decoded = mochijson2:decode(Args, [{format, proplist}]),

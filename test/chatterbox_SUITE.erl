@@ -37,9 +37,9 @@ create_and_delete_account(_) ->
     Username = {"name", "Adam"},
     Password = {"password", "Password"},
     Actions = [{{create_account, [Username, Password]}, "account is created"},
-               {{is_account_created, Username}, true},
+               {{is_account_created, [Username]}, true},
                {{delete_account, [Username, Password]}, "account is deleted"},
-               {{is_account_created, Username}, false}
+               {{is_account_created, [Username]}, false}
               ],
     perform_actions(Actions).
 
@@ -77,9 +77,9 @@ login_and_logout_once_created(_) ->
     Password = {"password", "Password"},
     Actions = [{{create_account, [Username, Password]}, "account is created"},
                {{login, [Username, Password]}, "logged in"},
-               {{is_logged_in, Username}, true},
+               {{is_logged_in, [Username]}, true},
                {{logout, [Username]}, "logged out"},
-               {{is_logged_in, Username}, false},
+               {{is_logged_in, [Username]}, false},
                {{delete_account, [Username, Password]}, "account is deleted"}
               ],
     perform_actions(Actions).
@@ -90,9 +90,9 @@ delete_account_after_logged_in(_) ->
     Password = {"password", "Password"},
     Actions = [{{create_account, [Username, Password]}, "account is created"},
                {{login, [Username, Password]}, "logged in"},
-               {{is_logged_in, Username}, true},
+               {{is_logged_in, [Username]}, true},
                {{delete_account, [Username, Password]}, "account is deleted"},
-               {{is_logged_in, Username}, false}
+               {{is_logged_in, [Username]}, false}
               ],
     perform_actions(Actions).
 
@@ -101,7 +101,7 @@ try_to_login_when_not_created(_) ->
     Username = {"name", "Adam"},
     Password = {"password", "Password"},
     Actions = [{{login, [Username, Password]}, "account must be created first"},
-               {{is_logged_in, Username}, false}],
+               {{is_logged_in, [Username]}, false}],
     perform_actions(Actions).
 
 %%--------------------------------------------------------------------
@@ -111,7 +111,7 @@ try_to_login_with_wrong_password(_) ->
     WrongPasssword = {"password", "Wrong"},
     Actions = [{{create_account, [Username, Password]}, "account is created"},
                {{login, [Username, WrongPasssword]}, "username or password is wrong"},
-               {{is_logged_in, Username}, false}],
+               {{is_logged_in, [Username]}, false}],
     perform_actions(Actions).
 
 %%--------------------------------------------------------------------
@@ -141,9 +141,9 @@ create_and_delete_room(_) ->
     Actions = [{{create_account, [Username, Password]}, "account is created"},
                {{login, [Username, Password]}, "logged in"},
                {{create_room, [Username, Roomname]}, "room is created"},
-               {{is_room_created, Roomname}, true},
+               {{is_room_created, [Roomname]}, true},
                {{delete_room, [Username, Roomname]}, "room is deleted"},
-               {{is_room_created, Roomname}, false}
+               {{is_room_created, [Roomname]}, false}
               ],
     perform_actions(Actions).
 

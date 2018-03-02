@@ -80,7 +80,7 @@ join_room(Args) ->
 %%--------------------------------------------------------------------
 handle_call({M, F, Args}, _, State) ->
     ct:pal("Command to send is ~p:~p(~p)~n", [M, F, Args]),
-    Reply = M:F(Args),
+    Reply = M:F([{"pid", self()} | Args]),
     ct:pal("Reply is ~p~n", [Reply]),
     {reply, Reply, State}.
 

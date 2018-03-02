@@ -26,8 +26,8 @@ init([]) ->
 create(Args) ->
     gen_server:call(?MODULE, {create, Args}).
 
-is_created(Room) ->
-    gen_server:call(?MODULE, {is_created, Room}).
+is_created(Args) ->
+    gen_server:call(?MODULE, {is_created, Args}).
 
 delete(Args) ->
     gen_server:call(?MODULE, {delete, Args}).
@@ -39,7 +39,9 @@ handle_call({create, Args}, _, State) ->
     Reply = create_if_not_exist(NewArgs),
     {reply, Reply, State};
 
-handle_call({is_created, {"roomname", Roomname}}, _, State) ->
+handle_call({is_created, Args}, _, State) ->
+    Tags = ["roomname"],
+    [Roomname] = chatterbox_lib:get_values(Tags, Args),
     Reply = ets:lookup(rooms, Roomname) /= [],
     {reply, Reply, State};
 
@@ -49,24 +51,24 @@ handle_call({delete, Args}, _, State) ->
     Reply = handle_deleting_room(NewArgs),
     {reply, Reply, State};
 
-handle_call(_Request, _From, State) ->
+handle_call(_, _, State) ->
     Reply = ok,
     {reply, Reply, State}.
 
 %%--------------------------------------------------------------------
-handle_cast(_Msg, State) ->
+handle_cast(_, State) ->
     {noreply, State}.
 
 %%--------------------------------------------------------------------
-handle_info(_Info, State) ->
+handle_info(_, State) ->
     {noreply, State}.
 
 %%--------------------------------------------------------------------
-terminate(_Reason, _State) ->
+terminate(_, _State) ->
     ok.
 
 %%--------------------------------------------------------------------
-code_change(_OldVsn, State, _Extra) ->
+code_change(_, State, _) ->
     {ok, State}.
 
 %%%===================================================================
