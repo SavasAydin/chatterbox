@@ -50,8 +50,11 @@ is_logged_in(Username) ->
 logout(Args) ->
     gen_server:call(?MODULE, {logout, Args}).
 
-broadcast(Username, Pid) ->
-    gen_server:cast(?MODULE, {broadcast, Username, Pid}).
+broadcast(Pid, Username) ->
+    gen_server:cast(?MODULE, {broadcast, Pid, Username}).
+
+unbroadcast(Pid, Username) ->
+    gen_server:cast(?MODULE, {unbroadcast, Pid, Username}).
 
 %%--------------------------------------------------------------------
 handle_call({create, Args}, _, State) ->
@@ -67,7 +70,7 @@ handle_call({is_created, Args}, _, State) ->
     {reply, Reply, State};
 
 handle_call({delete, Args}, _, State) ->
-    Tags = ["name", "password"],
+    Tags = ["pid", "name", "password"],
     NewArgs = chatterbox_lib:get_values(Tags, Args),
     Reply = delete_if_exists(NewArgs),
     {reply, Reply, State};
@@ -76,8 +79,7 @@ handle_call({login, Args}, _, State) ->
     Tags = ["pid", "name", "password"],
     NewArgs = chatterbox_lib:get_values(Tags, Args),
     Reply = handle_login(NewArgs),
-    Pids = State#state.pids,
-    {reply, Reply, State#state{pids = [hd(NewArgs) | Pids]}};
+    {reply, Reply, State};
 
 handle_call({is_logged_in, Args}, _, State) ->
     Tags = ["name"],
@@ -98,13 +100,19 @@ handle_call(_, _, State) ->
 %%--------------------------------------------------------------------
 handle_cast({register, Pid}, State) ->
     {noreply, State#state{broadcaster = Pid}};
-handle_cast({broadcast, Username, Pid}, State) ->
-    Pids = State#state.pids -- [Pid],
+handle_cast({broadcast, Pid, Username}, State) ->
+    Pids = State#state.pids,
     Broadcaster = State#state.broadcaster,
-    chatterbox_websocket:update(Broadcaster, Pids, Username),
-    Logins = [atom_to_list(Name) || {Name, _} <- ets:tab2list(logins)],
-    chatterbox_websocket:update(Broadcaster, [Pid], Logins -- [Username]),
-    {noreply, State};
+    chatterbox_websocket:add_to_logged_users(Broadcaster, Pids, [Username]),
+    Logins = get_online_users(Username),
+    chatterbox_websocket:add_to_logged_users(Broadcaster, [Pid], Logins),
+    {noreply, State#state{pids = [Pid | Pids]}};
+handle_cast({unbroadcast, Pid, Username}, State) ->
+    Pids = State#state.pids,
+    NewPids = Pids -- [Pid],
+    Broadcaster = State#state.broadcaster,
+    chatterbox_websocket:delete_from_logged_users(Broadcaster, NewPids, [Username]),
+    {noreply, State#state{pids = NewPids}};
 handle_cast(_, State) ->
     {noreply, State}.
 
@@ -132,10 +140,10 @@ create_if_not_exist([Username, Password]) ->
             "username is taken"
     end.
 
-delete_if_exists([Username, Password]) ->
+delete_if_exists([Pid, Username, Password]) ->
     case ets:lookup(accounts, Username) of
         [{Username, Password}] ->
-            handle_logout([pid, Username]),
+            handle_logout([Pid, Username]),
             true = ets:delete(accounts, Username),
             "account is deleted";
         [_] ->
@@ -157,7 +165,7 @@ login_if_authorized(Pid, Username, Password) ->
         [{Username, Password}] ->
             account:start_account_process(Username),
             chatterbox_debugger:increment_logged_accounts(),
-            broadcast(Username, Pid),
+            broadcast(Pid, Username),
             "logged in";
         [_] ->
             "username or password is wrong";
@@ -165,11 +173,12 @@ login_if_authorized(Pid, Username, Password) ->
             "account must be created first"
     end.
 
-handle_logout([_, Username]) ->
+handle_logout([Pid, Username]) ->
     case logged_in(Username) of
         true ->
             account:stop_account_process(Username),
             chatterbox_debugger:decrement_logged_accounts(),
+            unbroadcast(Pid, Username),
             "logged out";
         false ->
             "not logged in"
@@ -177,3 +186,7 @@ handle_logout([_, Username]) ->
 
 logged_in(Username) ->
     whereis(?TO_ATOM(Username)) /= undefined.
+
+get_online_users(Username) ->
+    Logins = [atom_to_list(Name) || {Name, _} <- ets:tab2list(logins)],
+    Logins -- [Username].

@@ -1,7 +1,8 @@
 -module(chatterbox_websocket).
 
 -export([start/1, stop/0, ws_loop/3, loop/2]).
--export([broadcast_server/1, update/3]).
+-export([broadcast_server/1]).
+-export([add_to_logged_users/3, delete_from_logged_users/3]).
 
 start(Port) ->
     Parent = self(),
@@ -43,7 +44,7 @@ ws_loop(Payload, Broadcaster, _) ->
     io:format("Received data:      ~p~n"
               "Response generated  ~p~n",
               [Payload, Response]),
-    Reply = build_json(response, Response),
+    Reply = build_json(response, [Response]),
     Broadcaster ! {send, self(), Reply},
     Broadcaster.
 
@@ -95,8 +96,7 @@ broadcast_send(Pid, Msg, Pids) ->
         _ ->
             ok
     end,
-    L = dict:to_list(Pids),
-    io:format(user, "broadcast_send~nPid ~p~nDict ~p~nMsg ~p~n~n", [Pid, L, Msg]),
+    io:format(user, "broadcast_send~nPid ~p~nMsg ~p~n~n", [Pid, Msg]),
     Pids.
 
 broadcast_sendall(Msg, Keys, Pids) ->
@@ -136,23 +136,36 @@ handle_request([Payload]) ->
     Args = decode(T),
     Module:Fun([{"pid", self()} | Args]).
 
-update(undefined, _, _) ->
+
+add_to_logged_users(Broadcaster, Pids, Users) ->
+    Tag = "logged_in_users",
+    update(Broadcaster, Pids, Tag, Users).
+
+delete_from_logged_users(Broadcaster, Pids, Users) ->
+    Tag = "logged_out_users",
+    update(Broadcaster, Pids, Tag, Users).
+
+update(undefined, _, _, _) ->
     io:format("update: broadcaster is undefined~n~n", []),
     ok;
-update(_, [], _) ->
+update(_, [], _, _) ->
     io:format("update: pids are empty~n~n", []),
     ok;
-update(_, _, []) ->
+update(_, _, _, []) ->
     io:format("update: msg is empty~n~n", []),
     ok;
-update(Broadcaster, Pids, Username) ->
+update(Broadcaster, Pids, Tag, Users) ->
     io:format("update: pids are ~p~n~n", [Pids]),
-    Msg = build_json("users", Username),
+    Msg = build_json_with_multiple_values(Tag, Users),
     Broadcaster ! {broadcast, Pids, Msg}.
 
 decode(Args) ->
     Decoded = mochijson2:decode(Args, [{format, proplist}]),
     [{binary_to_list(X), binary_to_list(Y)} || {X, Y} <- Decoded].
+
+build_json_with_multiple_values(Key, Message) ->
+    Struct = {struct, [{Key, [list_to_binary(X) || X<- Message]}]},
+    mochijson2:encode(Struct).
 
 build_json(Key, Message) ->
     Struct = {struct, [{Key, list_to_binary(Message)}]},
