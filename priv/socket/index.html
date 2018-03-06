@@ -48,6 +48,23 @@
              display: none
          }
 
+         .split{
+             text-align: left;
+             width: 15%;
+             position: fixed;
+             z-index: 1;
+             overflow-x: hidden;
+             padding-top: 20px;
+             padding: 14px;
+         }
+
+         .left{
+             left: 0;
+         }
+
+         .right{
+             right: 0;
+         }
 
          .modal {
              display: none; /* Hidden by default */
@@ -153,22 +170,28 @@
 
 
         <div id="logged_in">
-            <label>Do you want to create a chatterbox room?</label><br>
-            <button onclick="displayCreateRoom()">Create Room</button><br>
-            <label id="join">Do you want to join a room?</label><br>
-            <button onclick="joinRoom()">Join Room</button><br>
-            <label>Do you want to delete your chatterbox room?</label><br>
-            <button onclick="displayDeleteRoom()">Delete Room</button><br>
-            <label id="logout">Do you want to log out?</label><br>
-            <button onclick="logout()">Logout</button><br>
-            <label id="deleteAccount">Do you want to log out?</label><br>
-            <button onclick="displayDeleteAccount()">Delete Account</button><br>
-            <hr/>
-            <ul id="users">
-            </ul>
-            <hr/>
-            <ul id="rooms">
-            </ul>
+            <div>
+                <label>Do you want to create a chatterbox room?</label><br>
+                <button onclick="displayCreateRoom()">Create Room</button><br>
+                <label id="join">Do you want to join a room?</label><br>
+                <button onclick="joinRoom()">Join Room</button><br>
+                <label>Do you want to delete your chatterbox room?</label><br>
+                <button onclick="displayDeleteRoom()">Delete Room</button><br>
+                <label id="logout">Do you want to log out?</label><br>
+                <button onclick="logout()">Logout</button><br>
+                <label id="deleteAccount">Do you want to log out?</label><br>
+                <button onclick="displayDeleteAccount()">Delete Account</button><br>
+            </div>
+            <div class="split left">
+                <p>Online Users</p>
+                <ul id="users">
+                </ul>
+            </div>
+            <div class="split right">
+                <p>Chat rooms</p>
+                <ul id="rooms">
+                </ul>
+            </div>
         </div>
 
         <div id="create_room" class="modal">
@@ -222,7 +245,6 @@
             </div>
         </div>
 
-        <hr/>
         <script >
 
          var ws;
@@ -341,6 +363,7 @@
                  console.log("create room response is " + response);
                  if (response.includes("created") == true){
                      modals[2].style.display = 'none';
+                     updateOnlineUsers();
                  } else {
                      document.getElementById("create_room_response").innerHTML = response;
                  }
@@ -358,6 +381,7 @@
                  console.log("delete room response is " + response);
                  if (response.includes("deleted") == true){
                      modals[3].style.display = 'none';
+                     updateOnlineUsers();
                  } else {
                      document.getElementById("delete_room_response").innerHTML = response;
                  }
@@ -385,7 +409,6 @@
                      dll.innerHTML = 'Already have an account?';
                      var users = document.getElementById('users');
                      users.innerHTML = "";
-                     updateOnlineUsers();
                  }
                  else {
                      console.log("failed to logout");
@@ -425,21 +448,19 @@
                  if (isJson(event.data)) {
                      var json = JSON.parse(event.data)
                      if ('logged_in_users' in json) {
+                         console.log("updateOnlineUsers:1 " + JSON.stringify(event.data));
                          var logged_in = json.logged_in_users;
-                         var node = document.createElement("li");
-                         node.appendChild(document.createTextNode(logged_in));
-                         document.getElementById("users").appendChild(node);
-                         console.log("updateOnlineUsers logged in  " + json + " users " + users);
-                         console.log("updateOnlineUsers  logged in stringified" + JSON.stringify(event.data));
+                         for (var i = 0; i < logged_in.length; i++) {
+                             addItem(logged_in[i]);
+                         }
                      } else if ('logged_out_users' in json) {
+                         console.log("updateOnlineUsers:2 " + JSON.stringify(event.data));
                          var logged_out  = json.logged_out_users;
-                         var node = document.createElement("li");
-                         node.appendChild(document.createTextNode(logged_in));
-                         document.getElementById("users").removeChild(node)
-                         console.log("updateOnlineUsers  logged out " + json + " users " + users);
-                         console.log("updateOnlineUsers  logged out stringified" + JSON.stringify(event.data));
+                         for (var i = 0; i < logged_out.length; i++) {
+                             removeItem(logged_out[i]);
+                         }
                      } else {
-                         console.log("updateOnlineUsers not a known item " + JSON.stringify(event.data));
+                         console.log("updateOnlineUsers:3 " + JSON.stringify(event.data));
                      }
                  } else {
                      console.log("Not a JSON - received " + event.data);
@@ -454,6 +475,20 @@
                  isJson = (typeof(json) === 'object');
              } catch (e) {}
              return isJson;
+         }
+
+         function addItem(item) {
+             console.log("logged_in item is " + item);
+             var node = document.createElement("li");
+             node.setAttribute("id", item);
+             node.appendChild(document.createTextNode(item));
+             document.getElementById("users").appendChild(node);
+         }
+
+         function removeItem(item) {
+             console.log("logged_out item is " + item);
+             var item = document.getElementById(item);
+             item.parentNode.removeChild(item);
          }
 
          function openWebsocket(){
